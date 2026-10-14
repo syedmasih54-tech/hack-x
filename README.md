@@ -95,16 +95,38 @@ Welfare delivery in India faces a critical **last-mile navigation challenge**:
 
 ---
 
+## ☁️ 1-Click Deployment to Vercel
+
+BenefitBridge is fully pre-configured for seamless serverless full-stack deployment on **Vercel** with zero manual server configuration.
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fsyedmasih54-tech%2Fhack-x)
+
+### How It Works on Vercel:
+1. **Frontend**: The React 19 / Vite / Tailwind UI automatically compiles and deploys to Vercel's global Edge CDN (`/`).
+2. **Backend**: The FastAPI app runs as a high-performance Python Serverless Function (`api/index.py`), handling all `/schemes`, `/eligibility/*`, `/documents/*`, `/applications/*`, `/grievances/*`, `/auth/*`, `/docs`, and `/health` routes.
+3. **Database**: Ephemeral `/tmp/benefitbridge.db` SQLite storage initializes automatically on function invocation with seeded demo citizens and schemes.
+4. **Single-Domain Synergy**: Both frontend and backend share the identical origin (`*.vercel.app`), eliminating CORS configuration headaches.
+
+### Deploy in 3 Steps via Vercel Dashboard:
+1. Open **[vercel.com/new](https://vercel.com/new)** and log in with your GitHub account.
+2. Select **Import Git Repository** and choose **`syedmasih54-tech/hack-x`**.
+3. Leave **Framework Preset** as **Vite** (auto-detected), keep Root Directory as `./`, and click **Deploy**!
+
+---
+
 ## 📁 Repository Structure
 
 ```
 hack-x/
-├── backend/
+├── api/                              # Vercel Serverless Function Layer
+│   ├── index.py                      # Serverless ASGI entrypoint for FastAPI
+│   └── requirements.txt              # Serverless Python dependencies
+├── backend/                          # FastAPI Application Modules & Data
 │   ├── rules/                        # Versioned scheme rules (JSON)
 │   ├── sample_documents/             # Synthetic test documents for OCR verification
 │   ├── static/                       # Bundled static web assets
 │   ├── config.py                     # Configuration & environment loader
-│   ├── database.py                   # SQLAlchemy engine & session management
+│   ├── database.py                   # SQLAlchemy engine & SQLite (/tmp on Vercel)
 │   ├── digilocker_service.py         # DigiLocker & Meri Pehchaan OAuth service
 │   ├── grievance_service.py          # CPGRAMS & CM Helpline draft generator
 │   ├── main.py                       # FastAPI application & 19 REST endpoints
@@ -120,18 +142,18 @@ hack-x/
 │   ├── tracker_service.py            # SLA tracking & citizen milestone translator
 │   └── voice_service.py              # Bilingual speech intake & entity extractor
 │
-├── frontend/
-│   ├── src/
-│   │   ├── components/               # UI sections, preloader, tickets, closing
-│   │   ├── lib/                      # Helper utilities
-│   │   ├── App.tsx                   # Main React interactive application
-│   │   ├── index.css                 # Tailwind CSS styles & typography
-│   │   └── main.tsx                  # React entry point
-│   ├── public/                       # Public assets & icons
-│   ├── package.json                  # NPM scripts & dependencies
-│   ├── vite.config.ts                # Vite dev server configuration
-│   └── tsconfig.json                 # TypeScript compiler configuration
+├── src/                              # React 19 Frontend Source
+│   ├── components/                   # UI sections, preloader, tickets, closing
+│   ├── lib/                          # Helper utilities & dynamic URL resolver
+│   ├── App.tsx                       # Main React interactive application
+│   ├── index.css                     # Tailwind CSS styles & typography
+│   └── main.tsx                      # React entry point
 │
+├── public/                           # Public assets, logos, and favicons
+├── package.json                      # NPM scripts & Vite dependencies
+├── vite.config.ts                    # Vite dev server & production builder
+├── tsconfig.json                     # TypeScript compiler configuration
+├── vercel.json                       # Vercel serverless rewrite & routing rules
 ├── .gitignore                        # Global ignore for venv, node_modules, sqlite DBs
 └── README.md                         # Complete project documentation
 ```
@@ -241,3 +263,4 @@ python test_backend.py
 ## 📜 License
 
 This project is licensed under the MIT License.
+

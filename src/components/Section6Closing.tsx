@@ -1,4 +1,5 @@
 import React from "react";
+import { getPortalUrl } from "../lib/urls";
 
 export const Section6Closing: React.FC = () => {
   return (
@@ -20,7 +21,7 @@ export const Section6Closing: React.FC = () => {
         {/* Red CTA Button (At least 44px tall, accessible focus ring) */}
         <div>
           <a
-            href="http://127.0.0.1:8000/"
+            href={getPortalUrl()}
             target="_blank"
             rel="noreferrer"
             className="min-h-[48px] px-8 py-3.5 rounded-2xl bg-[#C41528] hover:bg-[#8E1B2B] text-white text-sm font-semibold tracking-wide transition-all shadow-[0_12px_28px_rgba(196,21,40,0.25)] hover:shadow-[0_16px_36px_rgba(196,21,40,0.35)] active:scale-98 inline-flex items-center gap-2 cursor-pointer"

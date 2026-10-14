@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { getPortalUrl } from "../lib/urls";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -506,7 +507,7 @@ export const Section4JourneyTickets: React.FC = () => {
                 {isThirdStubTorn ? (
                   <div className="pt-2 animate-fadeIn">
                     <a
-                      href="http://127.0.0.1:8000/"
+                      href={getPortalUrl()}
                       target="_blank"
                       rel="noreferrer"
                       onClick={(e) => e.stopPropagation()}

@@ -4,8 +4,12 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 from pathlib import Path
 
-DEFAULT_DB_PATH = str(Path(__file__).resolve().parent / "benefitbridge.db")
+DEFAULT_DB_PATH = "/tmp/benefitbridge.db" if os.getenv("VERCEL") else str(Path(__file__).resolve().parent / "benefitbridge.db")
 DATABASE_FILE = os.getenv("BENEFITBRIDGE_DB_PATH", DEFAULT_DB_PATH)
+try:
+    Path(DATABASE_FILE).parent.mkdir(parents=True, exist_ok=True)
+except Exception:
+    pass
 DATABASE_URL = f"sqlite:///{DATABASE_FILE}"
 
 # check_same_thread=False is needed for SQLite when used with FastAPI multi-threading

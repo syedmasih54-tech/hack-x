@@ -8,6 +8,7 @@ import Section3Focus from "./components/Section3Focus";
 import Section4JourneyTickets from "./components/Section4JourneyTickets";
 import Section5WhoDecides from "./components/Section5WhoDecides";
 import Section6Closing from "./components/Section6Closing";
+import { getPortalUrl, getDigiLockerUrl } from "./lib/urls";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -102,12 +103,12 @@ export default function App() {
             </div>
 
             <a
-              href="http://127.0.0.1:8000/"
+              href={getPortalUrl()}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1 text-[11px] font-medium text-[#8E1B2B] hover:text-[#C41528] transition-colors"
             >
-              <span>Live Portal (8000)</span>
+              <span>Live Portal</span>
               <span aria-hidden="true">↗</span>
             </a>
           </div>
@@ -160,7 +161,7 @@ export default function App() {
               </p>
             </div>
             <a
-              href="http://127.0.0.1:8000/auth/digilocker/login"
+              href={getDigiLockerUrl()}
               target="_blank"
               rel="noreferrer"
               className="mt-6 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#C41528] hover:bg-[#8E1B2B] text-white text-xs font-semibold transition-colors"
@@ -210,7 +211,7 @@ export default function App() {
               </p>
             </div>
             <a
-              href="http://127.0.0.1:8000/"
+              href={getPortalUrl()}
               target="_blank"
               rel="noreferrer"
               className="mt-6 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[#1A0F12]/20 hover:border-[#C41528] text-[#1A0F12] hover:text-[#C41528] text-xs font-semibold transition-colors"

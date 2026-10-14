@@ -1,0 +1,18 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/(schemes|eligibility|documents|applications|grievances|auth|health|voice|docs|openapi.json|redoc|portal)/:match*",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/(schemes|eligibility|documents|applications|grievances|auth|health|voice|docs|openapi.json|redoc|portal)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/api/:match*",
+      "destination": "/api/index.py"
+    }
+  ]
+}

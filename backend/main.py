@@ -179,6 +179,7 @@ if STATIC_DIR.exists():
 
 
 @app.get("/", summary="Citizen Welfare Navigator Web UI", tags=["Frontend"])
+@app.get("/portal", summary="Citizen Welfare Navigator Web UI", tags=["Frontend"])
 def serve_frontend():
     """Serves the citizen-side BenefitBridge web frontend directly."""
     index_file = STATIC_DIR / "index.html"
