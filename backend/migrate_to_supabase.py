@@ -220,3 +220,4 @@ if __name__ == "__main__":
         sys.exit(1)
 
     run_migration(supabase_url, update_env=not args.no_env)
+
