@@ -44,25 +44,26 @@ def ensure_database_schema():
     print("[1/4] Initializing Database Schema...")
     Base.metadata.create_all(bind=engine)
 
-    with engine.connect() as conn:
-        cursor_res = conn.exec_driver_sql("PRAGMA table_info(schemes);").fetchall()
-        existing_cols = {row[1] for row in cursor_res}
-        cols_to_add = {
-            "ministry_or_department": "VARCHAR(255) DEFAULT 'Government Authority'",
-            "state_or_level": "VARCHAR(64) DEFAULT 'Central'",
-            "official_guidelines_url": "VARCHAR(512)",
-            "last_synced_at": "DATETIME",
-            "is_live_source": "BOOLEAN DEFAULT 1",
-            "official_source_name": "VARCHAR(255)",
-            "source_gazette_or_guideline_url": "VARCHAR(512)",
-            "citizen_charter_clause": "VARCHAR(255)",
-            "last_verified_date": "VARCHAR(32)",
-            "is_live_data_source": "BOOLEAN DEFAULT 1"
-        }
-        for col_name, col_type in cols_to_add.items():
-            if col_name not in existing_cols:
-                conn.exec_driver_sql(f"ALTER TABLE schemes ADD COLUMN {col_name} {col_type};")
-        conn.commit()
+    if engine.dialect.name == "sqlite":
+        with engine.connect() as conn:
+            cursor_res = conn.exec_driver_sql("PRAGMA table_info(schemes);").fetchall()
+            existing_cols = {row[1] for row in cursor_res}
+            cols_to_add = {
+                "ministry_or_department": "VARCHAR(255) DEFAULT 'Government Authority'",
+                "state_or_level": "VARCHAR(64) DEFAULT 'Central'",
+                "official_guidelines_url": "VARCHAR(512)",
+                "last_synced_at": "DATETIME",
+                "is_live_source": "BOOLEAN DEFAULT 1",
+                "official_source_name": "VARCHAR(255)",
+                "source_gazette_or_guideline_url": "VARCHAR(512)",
+                "citizen_charter_clause": "VARCHAR(255)",
+                "last_verified_date": "VARCHAR(32)",
+                "is_live_data_source": "BOOLEAN DEFAULT 1"
+            }
+            for col_name, col_type in cols_to_add.items():
+                if col_name not in existing_cols:
+                    conn.exec_driver_sql(f"ALTER TABLE schemes ADD COLUMN {col_name} {col_type};")
+            conn.commit()
     print("      [OK] Database tables & provenance columns verified.")
 
 

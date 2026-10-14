@@ -101,16 +101,44 @@ BenefitBridge is fully pre-configured for seamless serverless full-stack deploym
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fsyedmasih54-tech%2Fhack-x)
 
-### How It Works on Vercel:
+### How It Works on Vercel + Supabase:
 1. **Frontend**: The React 19 / Vite / Tailwind UI automatically compiles and deploys to Vercel's global Edge CDN (`/`).
 2. **Backend**: The FastAPI app runs as a high-performance Python Serverless Function (`api/index.py`), handling all `/schemes`, `/eligibility/*`, `/documents/*`, `/applications/*`, `/grievances/*`, `/auth/*`, `/docs`, and `/health` routes.
-3. **Database**: Ephemeral `/tmp/benefitbridge.db` SQLite storage initializes automatically on function invocation with seeded demo citizens and schemes.
+3. **Database (Supabase PostgreSQL)**: When `DATABASE_URL` is set in Vercel environment variables, BenefitBridge connects to your managed Supabase PostgreSQL instance with connection pooling and SSL encryption. (If unset, it seamlessly falls back to ephemeral `/tmp/benefitbridge.db`).
 4. **Single-Domain Synergy**: Both frontend and backend share the identical origin (`*.vercel.app`), eliminating CORS configuration headaches.
 
-### Deploy in 3 Steps via Vercel Dashboard:
-1. Open **[vercel.com/new](https://vercel.com/new)** and log in with your GitHub account.
-2. Select **Import Git Repository** and choose **`syedmasih54-tech/hack-x`**.
-3. Leave **Framework Preset** as **Vite** (auto-detected), keep Root Directory as `./`, and click **Deploy**!
+### Deploy in 4 Steps (GitHub + Supabase + Vercel):
+
+#### 1. Create your Supabase Database
+1. Go to **[supabase.com](https://supabase.com)** and create a new project.
+2. In your Supabase Project Settings -> **Database**, copy your **Connection String** (URI).
+   - *Direct Connection*: `postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres`
+   - *Supavisor Pooler (Transaction Mode, port 6543)*: `postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres`
+
+#### 2. Run Database Schema & Seed on Supabase
+You can choose either option:
+- **Option A (Automated CLI Script)**:
+  ```bash
+  python backend/migrate_to_supabase.py --url "YOUR_SUPABASE_POSTGRES_URL"
+  ```
+  *This automatically creates all 8 tables and migrates all 104 demo citizens, schemes, applications, and SLA events.*
+- **Option B (Supabase Dashboard Web SQL Editor)**:
+  1. Open your Supabase Dashboard -> **SQL Editor**.
+  2. Paste and run [`supabase/schema.sql`](supabase/schema.sql).
+  3. Paste and run [`supabase/seed.sql`](supabase/seed.sql).
+
+#### 3. Push your repository to GitHub
+```bash
+git add .
+git commit -m "feat: configure Supabase PostgreSQL database integration"
+git push origin main
+```
+
+#### 4. Deploy via Vercel Dashboard
+1. Open **[vercel.com/new](https://vercel.com/new)** and import `syedmasih54-tech/hack-x`.
+2. Under **Environment Variables**, add:
+   - `DATABASE_URL`: `your_supabase_postgres_url`
+3. Click **Deploy**! Every future `git push` to GitHub will automatically deploy updates.
 
 ---
 
@@ -120,20 +148,21 @@ BenefitBridge is fully pre-configured for seamless serverless full-stack deploym
 hack-x/
 ├── api/                              # Vercel Serverless Function Layer
 │   ├── index.py                      # Serverless ASGI entrypoint for FastAPI
-│   └── requirements.txt              # Serverless Python dependencies
+│   └── requirements.txt              # Serverless Python dependencies (with psycopg2-binary)
 ├── backend/                          # FastAPI Application Modules & Data
 │   ├── rules/                        # Versioned scheme rules (JSON)
 │   ├── sample_documents/             # Synthetic test documents for OCR verification
 │   ├── static/                       # Bundled static web assets
 │   ├── config.py                     # Configuration & environment loader
-│   ├── database.py                   # SQLAlchemy engine & SQLite (/tmp on Vercel)
+│   ├── database.py                   # SQLAlchemy engine (Supabase Postgres & SQLite fallback)
 │   ├── digilocker_service.py         # DigiLocker & Meri Pehchaan OAuth service
 │   ├── grievance_service.py          # CPGRAMS & CM Helpline draft generator
 │   ├── main.py                       # FastAPI application & 19 REST endpoints
+│   ├── migrate_to_supabase.py        # Automated CLI migration to Supabase PostgreSQL
 │   ├── mismatch_checker.py           # Indian phonetic name & document comparator
 │   ├── models.py                     # Database models (Citizens, Schemes, Applications, etc.)
 │   ├── ocr_service.py                # Image OCR & Aadhaar regex scrubber
-│   ├── requirements.txt              # Python dependencies
+│   ├── requirements.txt              # Python dependencies (with psycopg2-binary)
 │   ├── rules_engine.py               # Deterministic eligibility evaluator
 │   ├── schemas.py                    # Pydantic v2 validation schemas
 │   ├── seed_data.py                  # Database seeder & synthetic test data
@@ -141,6 +170,9 @@ hack-x/
 │   ├── test_backend.py               # Complete 19-endpoint automated test suite
 │   ├── tracker_service.py            # SLA tracking & citizen milestone translator
 │   └── voice_service.py              # Bilingual speech intake & entity extractor
+├── supabase/                         # Supabase PostgreSQL DDL & Seed Scripts
+│   ├── schema.sql                    # Full PostgreSQL table DDL & index definitions
+│   └── seed.sql                      # Seed export with all 104 demo citizens, schemes & events
 │
 ├── src/                              # React 19 Frontend Source
 │   ├── components/                   # UI sections, preloader, tickets, closing

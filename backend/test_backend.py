@@ -14,6 +14,13 @@ def run_tests():
     print("      BenefitBridge Backend Test Suite            ")
     print("==================================================")
 
+    Base.metadata.create_all(bind=engine)
+    from seed_data import seed_database
+    try:
+        seed_database()
+    except Exception:
+        pass
+
     # 0. Root Frontend
     res = client.get("/")
     assert res.status_code == 200, f"Root frontend failed: {res.text}"
