@@ -1,1693 +1,884 @@
-import React, { useState, useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Lenis from "lenis";
-import Section1Intro from "./components/Section1Intro";
-import Section2Statement from "./components/Section2Statement";
-import Section3Focus from "./components/Section3Focus";
-import Section4JourneyTickets from "./components/Section4JourneyTickets";
-import Section5WhoDecides from "./components/Section5WhoDecides";
-import Section6Closing from "./components/Section6Closing";
-import { getPortalUrl, getDigiLockerUrl, getApiDocsUrl } from "./lib/urls";
+import React, { useState, useEffect } from "react";
 
-gsap.registerPlugin(ScrollTrigger);
+// Built-in URL helpers so "./lib/urls" never causes an [UNRESOLVED_IMPORT] build error
+const API_BASE_URL =
+  (import.meta as unknown as { env?: Record<string, string> }).env
+    ?.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
-export type Language = "en" | "hi";
+export function getPortalUrl(path: string = ""): string {
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  return `${API_BASE_URL}${cleanPath}`;
+}
 
-export interface SchemeInfo {
+export function getDigiLockerUrl(targetSchemeId: string = "ignoaps"): string {
+  return `${API_BASE_URL}/auth/digilocker/login?target_scheme_id=${encodeURIComponent(
+    targetSchemeId
+  )}`;
+}
+
+type Language = "en" | "hi";
+
+interface SchemeItem {
   id: string;
-  category: "all" | "central" | "state" | "scholarship";
-  ministry: { en: string; hi: string };
-  title: { en: string; hi: string };
-  description: { en: string; hi: string };
-  criteria: { en: string; hi: string };
-  sla: { en: string; hi: string };
-  charter: { en: string; hi: string };
+  title: string;
+  ministry: string;
+  level: string;
+  slaDays: number;
+  charterClause: string;
+  eligibilityText: string;
+  benefitAmount: string;
   portalUrl: string;
-  badge: { en: string; hi: string };
+  guidelinesUrl: string;
 }
 
-export interface TrackedApp {
-  id: string;
-  applicant: string;
-  scheme: { en: string; hi: string };
-  status: "Submitted" | "Under Review" | "Verified" | "Dispatched";
-  slaDaysTotal: number;
-  slaDaysRemaining: number;
-  targetDate: string;
-  dbtStatus: "Linked" | "Pending" | "Variation Detected";
-}
-
-export interface TranslationSchema {
-  splash: {
-    subtitle: string;
-    dpiBadge: string;
-    skipBtn: string;
-    replayBtn: string;
-  };
-  nav: {
-    brand: string;
-    taglineDesktop: string;
-    taglineMobile: string;
-    liveGatewayBadge: string;
-    tabDashboard: string;
-    tabEligibility: string;
-    tabSchemes: string;
-    tabDocDoctor: string;
-    tabTrack: string;
-    apiDocsBtn: string;
-    livePortalBtn: string;
-  };
-  hero: {
-    badge: string;
-    headline: string;
-    subtitle: string;
-    stat1Val: string;
-    stat1Label: string;
-    stat2Val: string;
-    stat2Label: string;
-    stat3Val: string;
-    stat3Label: string;
-    stat4Val: string;
-    stat4Label: string;
-  };
-  cards: {
-    digilocker: {
-      badge: string;
-      title: string;
-      description: string;
-      cta: string;
-    };
-    voice: {
-      badge: string;
-      title: string;
-      description: string;
-      cta: string;
-    };
-    documentDoctor: {
-      badge: string;
-      title: string;
-      description: string;
-      cta: string;
-    };
-  };
-  schemesSection: {
-    sectionBadge: string;
-    title: string;
-    subtitle: string;
-    filterAll: string;
-    filterCentral: string;
-    filterState: string;
-    filterScholarship: string;
-    criteriaLabel: string;
-    slaLabel: string;
-    charterLabel: string;
+const TRANSLATIONS: Record<
+  Language,
+  {
+    brandTagline: string;
+    liveGateway: string;
+    apiDocs: string;
+    skipIntro: string;
+    dpiReady: string;
+    navOverview: string;
+    navSchemes: string;
+    navEligibility: string;
+    navDocDoctor: string;
+    heroBadge: string;
+    heroTitle: string;
+    heroSubtitle: string;
+    card1Title: string;
+    card1Desc: string;
+    card1Btn: string;
+    card2Title: string;
+    card2Desc: string;
+    card2Btn: string;
+    card2StopBtn: string;
+    card2Listening: string;
+    card2SampleTranscript: string;
+    card3Title: string;
+    card3Desc: string;
+    card3Btn: string;
+    schemesHeading: string;
+    schemesSubheading: string;
+    ministryLabel: string;
+    eligibilityLabel: string;
+    benefitLabel: string;
+    slaBadgeSuffix: string;
+    applyDigiLockerBtn: string;
     visitPortalBtn: string;
-  };
-  eligibilitySection: {
-    sectionBadge: string;
-    title: string;
-    subtitle: string;
+    eligibilityModalTitle: string;
     ageLabel: string;
-    agePlaceholder: string;
     incomeLabel: string;
-    incomePlaceholder: string;
-    categoryLabel: string;
-    statusLabel: string;
-    statusOptions: {
-      senior: string;
-      widow: string;
-      student: string;
-      farmer: string;
-      general: string;
-    };
-    stateLabel: string;
-    stateOptions: {
-      all: string;
-      delhi: string;
-      up: string;
-      bihar: string;
-      maharashtra: string;
-    };
-    evaluateBtn: string;
-    resultEligibleCount: string;
-    resultEligibleBadge: string;
-    resultNone: string;
-  };
-  trackerSection: {
-    sectionBadge: string;
-    title: string;
-    subtitle: string;
-    placeholder: string;
-    trackBtn: string;
-    quickSampleTokens: string;
-    statusLabel: string;
-    targetDateLabel: string;
-    slaProgressLabel: string;
-    escalationReady: string;
-    dbtStatusLabel: string;
-  };
-  slaRibbon: {
-    actTitle: string;
-    slaGuarantee: string;
-    escalationNotice: string;
-  };
-  modals: {
-    voiceTitle: string;
-    voiceSubtitle: string;
-    voiceIdle: string;
-    voiceRecording: string;
-    voiceSuccess: string;
-    voiceSamplePrompt: string;
-    voiceSampleHindi: string;
-    voiceSampleEnglish: string;
-    voiceStartBtn: string;
-    voiceStopBtn: string;
-    voiceClose: string;
-    scannerTitle: string;
-    scannerSubtitle: string;
-    scannerCard1Title: string;
-    scannerCard2Title: string;
-    scannerDetectedMismatch: string;
-    scannerAdvice: string;
-    scannerLaunchPortal: string;
-    scannerClose: string;
-  };
-}
-
-export const SCHEMES_DATABASE: SchemeInfo[] = [
-  {
-    id: "old_age_pension",
-    category: "central",
-    ministry: {
-      en: "Ministry of Rural Development, Govt of India",
-      hi: "ग्रामीण विकास मंत्रालय, भारत सरकार",
-    },
-    title: {
-      en: "Indira Gandhi National Old Age Pension Scheme (IGNOAPS)",
-      hi: "इंदिरा गांधी राष्ट्रीय वृद्धावस्था पेंशन योजना (IGNOAPS)",
-    },
-    description: {
-      en: "Direct statutory monthly pension transferred via Direct Benefit Transfer (DBT) to senior citizens living below the poverty line.",
-      hi: "गरीबी रेखा से नीचे जीवनयापन करने वाले वृद्ध नागरिकों को प्रत्यक्ष लाभ अंतरण (DBT) के माध्यम से मासिक पेंशन सहायता।",
-    },
-    criteria: {
-      en: "Age 60 years or above, BPL certified household, active bank passbook",
-      hi: "आयु ६० वर्ष या अधिक, बीपीएल प्रमाणित परिवार, सक्रिय बैंक पासबुक",
-    },
-    sla: {
-      en: "45-Day Statutory SLA",
-      hi: "४५-दिवसीय वैधानिक समय-सीमा",
-    },
-    charter: {
-      en: "NSAP Citizen's Charter 2026 & State Public Services Act",
-      hi: "एनएसएपी नागरिक अधिकार पत्र २०२६ एवं राज्य लोक सेवा अधिनियम",
-    },
-    portalUrl: "https://nsap.dord.gov.in",
-    badge: {
-      en: "Central NSAP",
-      hi: "केंद्रीय एनएसएपी",
-    },
-  },
-  {
-    id: "widow_pension",
-    category: "central",
-    ministry: {
-      en: "Ministry of Rural Development, Govt of India",
-      hi: "ग्रामीण विकास मंत्रालय, भारत सरकार",
-    },
-    title: {
-      en: "Indira Gandhi National Widow Pension Scheme (IGNWPS)",
-      hi: "इंदिरा गांधी राष्ट्रीय विधवा पेंशन योजना (IGNWPS)",
-    },
-    description: {
-      en: "Statutory social welfare pension assistance for widows from vulnerable households with zero processing delay.",
-      hi: "आर्थिक रूप से संवेदनशील परिवारों की विधवा महिलाओं के लिए बिना किसी विलंब के प्रत्यक्ष वैधानिक मासिक पेंशन सहायता।",
-    },
-    criteria: {
-      en: "Female applicant, Age 40-79 years, Widow status, BPL household",
-      hi: "महिला आवेदक, आयु ४०-७९ वर्ष, विधवा स्थिति, बीपीएल परिवार",
-    },
-    sla: {
-      en: "30-Day Mandatory Statutory SLA",
-      hi: "३०-दिवसीय अनिवार्य वैधानिक समय-सीमा",
-    },
-    charter: {
-      en: "Citizen Charter Clause 4.2 (Statutory Redressal)",
-      hi: "नागरिक अधिकार पत्र क्लॉज ४.२ (वैधानिक समाधान)",
-    },
-    portalUrl: "https://nsap.dord.gov.in",
-    badge: {
-      en: "Direct Benefit Transfer",
-      hi: "प्रत्यक्ष लाभ अंतरण",
-    },
-  },
-  {
-    id: "family_benefit",
-    category: "state",
-    ministry: {
-      en: "Ministry of Rural Development & State Social Welfare Departments",
-      hi: "ग्रामीण विकास मंत्रालय एवं राज्य समाज कल्याण विभाग",
-    },
-    title: {
-      en: "National Family Benefit Scheme (NFBS)",
-      hi: "राष्ट्रीय परिवार लाभ योजना (NFBS)",
-    },
-    description: {
-      en: "One-time statutory lump-sum financial assistance of ₹20,000 provided to the bereaved BPL family upon death of the primary breadwinner.",
-      hi: "परिवार के मुख्य कमाऊ मुखिया की मृत्यु पर शोक संतप्त बीपीएल परिवार को ₹२०,००० की एकमुश्त वैधानिक आर्थिक सहायता।",
-    },
-    criteria: {
-      en: "Death of primary breadwinner aged 18-59 years, BPL certified household",
-      hi: "१८-५९ आयु वर्ग के मुख्य अर्जक की मृत्यु, बीपीएल प्रमाणित परिवार",
-    },
-    sla: {
-      en: "30-Day Statutory Disposal",
-      hi: "३०-दिवसीय वैधानिक निस्तारण",
-    },
-    charter: {
-      en: "State Public Services Delivery Act Sec 4",
-      hi: "राज्य लोक सेवा प्रदायगी अधिनियम धारा ४",
-    },
-    portalUrl: "https://nsap.dord.gov.in",
-    badge: {
-      en: "Lump-Sum Grant",
-      hi: "एकमुश्त अनुदान",
-    },
-  },
-  {
-    id: "scholarship",
-    category: "scholarship",
-    ministry: {
-      en: "Ministry of Social Justice & Empowerment / Tribal Affairs",
-      hi: "सामाजिक न्याय एवं अधिकारिता / जनजातीय कार्य मंत्रालय",
-    },
-    title: {
-      en: "Post-Matric Scholarship for SC/ST/OBC Students",
-      hi: "अनुसूचित जाति/जनजाति/अन्य पिछड़ा वर्ग छात्रवृत्ति (Post-Matric)",
-    },
-    description: {
-      en: "Complete educational tuition waiver and monthly maintenance allowance disbursed directly into verified student bank accounts.",
-      hi: "उच्च शिक्षा को सुगम बनाने हेतु ट्यूशन फीस प्रतिपूर्ति एवं मासिक अनुरक्षण भत्ता सीधे छात्र के बैंक खाते में।",
-    },
-    criteria: {
-      en: "SC/ST/OBC category, Enrolled in recognized course, Family income ≤ ₹2.5 Lakh/year",
-      hi: "अ.जा./अ.ज.जा./ओबीसी वर्ग, मान्यता प्राप्त पाठ्यक्रम में अध्ययनरत, पारिवारिक आय ≤ ₹२.५ लाख/वर्ष",
-    },
-    sla: {
-      en: "21-Day Institutional Verification SLA",
-      hi: "२१-दिवसीय संस्थागत सत्यापन समय-सीमा",
-    },
-    charter: {
-      en: "National Scholarship Portal (NSP) Citizen Charter",
-      hi: "राष्ट्रीय छात्रवृत्ति पोर्टल (NSP) नागरिक अधिकार पत्र",
-    },
-    portalUrl: "https://scholarships.gov.in",
-    badge: {
-      en: "National Scholarship Portal",
-      hi: "राष्ट्रीय छात्रवृत्ति पोर्टल",
-    },
-  },
-];
-
-export const TRANSLATIONS: Record<Language, TranslationSchema> = {
+    checkNowBtn: string;
+    eligibleMsg: string;
+    notEligibleMsg: string;
+    docModalTitle: string;
+    docNameAadhaarLabel: string;
+    docNameBankLabel: string;
+    verifyMatchBtn: string;
+    matchWarning: string;
+    matchSuccess: string;
+    slaPrefix: string;
+    slaStrong: string;
+    slaRight: string;
+    schemes: SchemeItem[];
+  }
+> = {
   en: {
-    splash: {
-      subtitle: "Direct Public Digital Infrastructure (DPI) & Statutory Welfare Gateway for India",
-      dpiBadge: "NIC / API Setu / DigiLocker Connected",
-      skipBtn: "Skip Intro →",
-      replayBtn: "Replay Cinematic Intro ↻",
-    },
-    nav: {
-      brand: "BenefitBridge",
-      taglineDesktop: "Citizen Welfare & Statutory Rights Platform",
-      taglineMobile: "Welfare Gateway",
-      liveGatewayBadge: "Live Gateway Active",
-      tabDashboard: "Dashboard",
-      tabEligibility: "Check Eligibility",
-      tabSchemes: "Schemes Directory",
-      tabDocDoctor: "Document Doctor",
-      tabTrack: "Track Application",
-      apiDocsBtn: "API Docs",
-      livePortalBtn: "Live Portal",
-    },
-    hero: {
-      badge: "National Civic Gateway • Statutory Rights & Public Service Guarantee Act 2026",
-      headline: "India's Direct Welfare & Statutory Benefit Navigator",
-      subtitle:
-        "Pre-screen scheme eligibility, prevent bank DBT rejections through phonetic spelling analysis, and apply directly via DigiLocker with guaranteed 30-day Citizen Charter statutory disposal.",
-      stat1Val: "100%",
-      stat1Label: "Paperless DigiLocker OIDC",
-      stat2Val: "30 Days",
-      stat2Label: "Mandatory Statutory SLA",
-      stat3Val: "95%+",
-      stat3Label: "DBT Name Mismatch Prevention",
-      stat4Val: "Zero",
-      stat4Label: "PII / Aadhaar Storage",
-    },
-    cards: {
-      digilocker: {
-        badge: "API Setu v2.0 Partner",
-        title: "DigiLocker Direct Apply",
-        description:
-          "Connect government-verified DigiLocker credentials. Pull authentic Ration Cards and Income Certificates automatically with zero manual upload friction.",
-        cta: "Connect DigiLocker (One-Click Apply)",
+    brandTagline: "Citizen Welfare Navigator • सेतु नागरिक सशक्तिकरण",
+    liveGateway: "Live DPI Gateway",
+    apiDocs: "API Docs",
+    skipIntro: "Skip Intro →",
+    dpiReady: "DigiLocker • API Setu • Citizen Charter DPI Ready",
+    navOverview: "Dashboard",
+    navSchemes: "Live Schemes",
+    navEligibility: "Eligibility Check",
+    navDocDoctor: "Document Doctor",
+    heroBadge: "National Welfare & Statutory Rights Layer",
+    heroTitle: "Direct Benefit Access, Guaranteed Deadlines.",
+    heroSubtitle:
+      "Pre-screen welfare eligibility against official government rules, prevent DBT bank rejections caused by name spelling mismatches, and apply directly via DigiLocker.",
+    card1Title: "DigiLocker Direct Apply",
+    card1Desc:
+      "Connect your government-verified Meri Pehchaan / DigiLocker account to pull authentic Ration Cards, Income, and Age Certificates automatically.",
+    card1Btn: "Log in with DigiLocker",
+    card2Title: "Voice Assistance (हिंदी / EN)",
+    card2Desc:
+      "Speak your age, annual income, and situation naturally in Hindi or English. Whisper AI transcribes and pre-fills your welfare check.",
+    card2Btn: "Start Voice Input",
+    card2StopBtn: "Stop Recording",
+    card2Listening: "Listening... Speak in Hindi or English",
+    card2SampleTranscript:
+      "\"My age is 66 years and my annual family income is ₹42,000. Which pension schemes can I apply for?\"",
+    card3Title: "Document Doctor (Mismatch Check)",
+    card3Desc:
+      "Phonetic transliteration engine flags spelling variations (e.g., Sunita Devi vs Sunitha Devi) across Ration Card and Bank Passbook before submission.",
+    card3Btn: "Run Document Doctor",
+    schemesHeading: "Verified Government Schemes & Official Portals",
+    schemesSubheading:
+      "Live eligibility parameters synced with NSAP, myScheme.gov.in, and National Scholarship Portal with statutory Citizen Charter SLA timelines.",
+    ministryLabel: "Ministry / Department",
+    eligibilityLabel: "Eligibility Criteria",
+    benefitLabel: "Direct Benefit (DBT)",
+    slaBadgeSuffix: "Days Statutory SLA",
+    applyDigiLockerBtn: "One-Click DigiLocker Apply",
+    visitPortalBtn: "Official Portal ↗",
+    eligibilityModalTitle: "Instant Statutory Eligibility Pre-Screen",
+    ageLabel: "Citizen Age (Years)",
+    incomeLabel: "Annual Family Income (₹ INR)",
+    checkNowBtn: "Evaluate Official Rules",
+    eligibleMsg:
+      "✓ You meet the primary age and income criteria for Central NSAP & State Welfare schemes! Proceed with DigiLocker to verify certificates.",
+    notEligibleMsg:
+      "ℹ Based on the entered age/income, you exceed the BPL threshold for NSAP pensions, but you can explore open merit scholarships below.",
+    docModalTitle: "Document Doctor: Pre-Submission Name & DBT Verifier",
+    docNameAadhaarLabel: "Name on Identity / Ration Card",
+    docNameBankLabel: "Name on Bank Passbook (DBT Account)",
+    verifyMatchBtn: "Check Phonetic & DBT Compatibility",
+    matchWarning:
+      "⚠ Phonetic Variation Detected! Minor vowel/consonant difference found. We have generated an automated One-And-The-Same-Person Annexure to prevent bank DBT rejection.",
+    matchSuccess:
+      "✓ 100% Exact Character Match! Your documents are ready for zero-rejection Direct Benefit Transfer.",
+    slaPrefix: "Right to Public Service SLA:",
+    slaStrong: "30–45 Day Statutory Disposal Guarantee",
+    slaRight: "Auto-CPGRAMS grievance escalation enabled if deadlines lapse",
+    schemes: [
+      {
+        id: "ignoaps",
+        title: "Indira Gandhi National Old Age Pension Scheme (IGNOAPS)",
+        ministry: "Ministry of Rural Development (MoRD)",
+        level: "Central • NSAP",
+        slaDays: 30,
+        charterClause: "Right to Public Services Act • Citizen Charter Sec 4(1)",
+        eligibilityText: "Age 60+ years • BPL Household / Annual Income below ₹1,00,000",
+        benefitAmount: "₹1,000 – ₹2,500 / month (Central + State Top-up via DBT)",
+        portalUrl: "https://nsap.dord.gov.in",
+        guidelinesUrl: "https://www.myscheme.gov.in/schemes/ignoaps",
       },
-      voice: {
-        badge: "Bilingual Whisper AI",
-        title: "Voice Assistance (हिंदी / EN)",
-        description:
-          "Speak age, gender, occupation, and family status naturally. Powered by bilingual Whisper speech recognition to automatically parse and populate scheme criteria.",
-        cta: "Bolein aur Aavedan Karein / Speak to Apply",
+      {
+        id: "ignwps",
+        title: "Indira Gandhi National Widow Pension Scheme (IGNWPS)",
+        ministry: "Ministry of Rural Development (MoRD)",
+        level: "Central • NSAP",
+        slaDays: 30,
+        charterClause: "NSAP Operational Guidelines & Citizen Charter SLA",
+        eligibilityText: "Women aged 40–79 years • BPL Category / Income Certificate",
+        benefitAmount: "₹1,500 – ₹2,500 / month Direct Bank Transfer",
+        portalUrl: "https://nsap.dord.gov.in",
+        guidelinesUrl: "https://www.myscheme.gov.in/schemes/ignwps",
       },
-      documentDoctor: {
-        badge: "DBT / PFMS Pre-Verification",
-        title: "Document Doctor (Mismatch)",
-        description:
-          "Detects critical Indian spelling differences (e.g., 'Sunita Devi vs Sunitha Devi', 'Choudhary vs Chaudhary') across Ration Cards and Bank Passbooks before submission to prevent Direct Benefit Transfer failure.",
-        cta: "Scan & Resolve Name Mismatches",
+      {
+        id: "nfbs",
+        title: "National Family Benefit Scheme (NFBS)",
+        ministry: "Ministry of Rural Development (MoRD)",
+        level: "Central • NSAP",
+        slaDays: 45,
+        charterClause: "Statutory Bereavement Support Guarantee",
+        eligibilityText: "Bereaved BPL household on demise of primary breadwinner (18–59 yrs)",
+        benefitAmount: "₹20,000 Lump-Sum Direct Assistance",
+        portalUrl: "https://nsap.dord.gov.in",
+        guidelinesUrl: "https://www.myscheme.gov.in/schemes/nfbs",
       },
-    },
-    schemesSection: {
-      sectionBadge: "Real-Time Civic Integration",
-      title: "Live Government Schemes & Portals Directory",
-      subtitle:
-        "Verified real-time portal integration across Central NSAP, State Social Welfare, and National Scholarship Portals with statutory Citizen Charter clauses.",
-      filterAll: "All Schemes (4)",
-      filterCentral: "Central NSAP",
-      filterState: "State Welfare",
-      filterScholarship: "Scholarships",
-      criteriaLabel: "Eligibility Criteria",
-      slaLabel: "Statutory SLA",
-      charterLabel: "Citizen Charter Clause",
-      visitPortalBtn: "Official Portal",
-    },
-    eligibilitySection: {
-      sectionBadge: "Deterministic Rules Engine",
-      title: "Eligibility Pre-Screening & Citizen Calculator",
-      subtitle:
-        "Enter basic household details to evaluate statutory scheme qualification instantly with zero data retention.",
-      ageLabel: "Applicant Age (Years)",
-      agePlaceholder: "e.g. 65",
-      incomeLabel: "Annual Household Income (₹ INR)",
-      incomePlaceholder: "e.g. 120000",
-      categoryLabel: "Social Category",
-      statusLabel: "Applicant Profile / Status",
-      statusOptions: {
-        senior: "Senior Citizen (Age 60+)",
-        widow: "Widow (BPL Household)",
-        student: "Student (Higher Education)",
-        farmer: "Small / Marginal Farmer",
-        general: "General Citizen",
+      {
+        id: "nsp_post_matric",
+        title: "Central Sector & Post-Matric Scholarship Scheme",
+        ministry: "Ministry of Social Justice & Empowerment / MeitY",
+        level: "Central • NSP",
+        slaDays: 45,
+        charterClause: "National Scholarship Portal Verification SLA",
+        eligibilityText: "Students in Class 11 to Post-Graduation • Family Income ≤ ₹2,50,000",
+        benefitAmount: "Full Tuition Fee Reimbursement + Academic Allowance",
+        portalUrl: "https://scholarships.gov.in",
+        guidelinesUrl: "https://www.myscheme.gov.in",
       },
-      stateLabel: "State / UT",
-      stateOptions: {
-        all: "All-India (National)",
-        delhi: "NCT of Delhi",
-        up: "Uttar Pradesh",
-        bihar: "Bihar",
-        maharashtra: "Maharashtra",
-      },
-      evaluateBtn: "Evaluate Scheme Qualification ⚡",
-      resultEligibleCount: "Qualified Schemes Found",
-      resultEligibleBadge: "Statutory Match Confirmed",
-      resultNone: "No direct schemes matched with the entered parameters. Please review your income or age threshold.",
-    },
-    trackerSection: {
-      sectionBadge: "Citizen Charter Enforcement",
-      title: "Statutory SLA & Application Status Tracker",
-      subtitle:
-        "Translate opaque government status codes into transparent milestones and statutory disposal countdowns.",
-      placeholder: "Enter Application Token (e.g. APP-82403435 or APP-SUNITA-ACTIVE-01)",
-      trackBtn: "Track Status",
-      quickSampleTokens: "Quick Test Tokens:",
-      statusLabel: "Current Stage",
-      targetDateLabel: "Statutory SLA Target Date",
-      slaProgressLabel: "Statutory 30-Day Window Progress",
-      escalationReady: "CPGRAMS Legal Escalator Ready",
-      dbtStatusLabel: "DBT Account Status",
-    },
-    slaRibbon: {
-      actTitle: "State Right to Public Services Act:",
-      slaGuarantee: "30-Day Mandatory Statutory SLA",
-      escalationNotice:
-        "Automatic CPGRAMS & State CM Helpline legal petition triggered if statutory government deadlines lapse",
-    },
-    modals: {
-      voiceTitle: "Bilingual Voice Assistance",
-      voiceSubtitle: "Whisper AI speech recognition in Hindi & English",
-      voiceIdle: "Ready to listen. Click 'Start Voice Intake' below.",
-      voiceRecording: "Microphone Active • Listening in Hindi & English...",
-      voiceSuccess: "Voice details processed successfully! Extracted: Widow Pension criteria matched.",
-      voiceSamplePrompt:
-        "Speak naturally. For example: 'Main Sunita Devi hoon, umar 65 varsh, mujhe widow pension chahiye' or 'My annual income is 1.2 lakh, student scholarship'.",
-      voiceSampleHindi: "हिंदी उदाहरण: 'मेरी उम्र 65 वर्ष है, मैं विधवा पेंशन के लिए आवेदन करना चाहती हूँ।'",
-      voiceSampleEnglish: "English Sample: 'I am Amit Kumar, 20-year-old student applying for scholarship.'",
-      voiceStartBtn: "Start Voice Intake 🎙",
-      voiceStopBtn: "Analyze Speech ⚡",
-      voiceClose: "Close Window",
-      scannerTitle: "Document Doctor & Phonetic Matcher",
-      scannerSubtitle: "In-memory Indian name & DBT account validator",
-      scannerCard1Title: "Aadhaar / Ration Card Name",
-      scannerCard2Title: "Bank Passbook Account Name",
-      scannerDetectedMismatch: "95% Phonetic Match: 'Sunita Devi' vs 'Sunitha Devi' (Difference: 'th' vs 't')",
-      scannerAdvice:
-        "BenefitBridge does NOT reject your application. Resolving this spelling difference now prevents Direct Benefit Transfer (DBT) rejection by the bank.",
-      scannerLaunchPortal: "Launch Scanner in Live Portal ↗",
-      scannerClose: "Close",
-    },
+    ],
   },
   hi: {
-    splash: {
-      subtitle: "भारत का प्रत्यक्ष डिजिटल सार्वजनिक अवसंरचना (DPI) एवं वैधानिक कल्याण गेटवे",
-      dpiBadge: "एनआईसी / एपीआई सेतु / डिजीलॉकर कनेक्टेड",
-      skipBtn: "सीधे पोर्टल पर जाएं →",
-      replayBtn: "सिनेमैटिक इंट्रो पुनः देखें ↻",
-    },
-    nav: {
-      brand: "बेनिफ़िट-ब्रिज",
-      taglineDesktop: "नागरिक जन-कल्याण एवं अधिकार मंच",
-      taglineMobile: "कल्याण गेटवे",
-      liveGatewayBadge: "लाइव गेटवे सक्रिय",
-      tabDashboard: "डैशबोर्ड",
-      tabEligibility: "पात्रता जांचें",
-      tabSchemes: "योजना निर्देशिका",
-      tabDocDoctor: "दस्तावेज़ डॉक्टर",
-      tabTrack: "आवेदन ट्रैक करें",
-      apiDocsBtn: "एपीआई दस्तावेज़",
-      livePortalBtn: "लाइव पोर्टल",
-    },
-    hero: {
-      badge: "राष्ट्रीय नागरिक गेटवे • लोक सेवा गारंटी एवं नागरिक अधिकार पत्र अधिनियम २०२६",
-      headline: "भारत का प्रत्यक्ष जन-कल्याण एवं वैधानिक लाभ नेविगेटर",
-      subtitle:
-        "योजना पात्रता की पूर्व-जांच करें, ध्वन्यात्मक वर्तनी विश्लेषण से बैंक डीबीटी विफलता रोकें, और नागरिक अधिकार पत्र के ३०-दिवसीय वैधानिक निपटान के साथ डिजीलॉकर से सीधे आवेदन करें।",
-      stat1Val: "१००%",
-      stat1Label: "पेपरलेस डिजीलॉकर OIDC",
-      stat2Val: "३० दिन",
-      stat2Label: "अनिवार्य वैधानिक समय-सीमा",
-      stat3Val: "९५%+",
-      stat3Label: "डीबीटी नाम विसंगति रोकथाम",
-      stat4Val: "शून्य",
-      stat4Label: "आधार डेटा भंडारण शून्य",
-    },
-    cards: {
-      digilocker: {
-        badge: "एपीआई सेतु v2.0 अधिकृत",
-        title: "डिजीलॉकर प्रत्यक्ष आवेदन",
-        description:
-          "सरकारी डिजीलॉकर क्रेडेंशियल्स से जुड़ें। बिना किसी मैन्युअल अपलोड के स्वतः प्रामाणिक राशन कार्ड और आय प्रमाण पत्र प्राप्त करें।",
-        cta: "डिजीलॉकर से आवेदन करें (वन-क्लिक)",
+    brandTagline: "नागरिक कल्याण नेविगेटर • सेतु नागरिक सशक्तिकरण",
+    liveGateway: "लाइव डीपीआई गेटवे",
+    apiDocs: "एपीआई डॉक्स",
+    skipIntro: "आगे बढ़ें →",
+    dpiReady: "डिजीलॉकर • एपीआई सेतु • सिटीजन चार्टर DPI तैयार",
+    navOverview: "मुख्य पटल",
+    navSchemes: "सरकारी योजनाएं",
+    navEligibility: "पात्रता जांच",
+    navDocDoctor: "डॉक्यूमेंट डॉक्टर",
+    heroBadge: "राष्ट्रीय कल्याण एवं कानूनी अधिकार मंच",
+    heroTitle: "सीधा सरकारी लाभ, तय समय-सीमा की गारंटी।",
+    heroSubtitle:
+      "आधिकारिक सरकारी नियमों के अनुसार अपनी पात्रता जांचें, नाम की स्पेलिंग में अंतर से रुकने वाले बैंक डीबीटी (DBT) भुगतान को सुधारें और डिजीलॉकर से सीधे आवेदन करें।",
+    card1Title: "डिजीलॉकर से सीधा आवेदन",
+    card1Desc:
+      "अपना सरकारी सत्यापित मेरी पहचान / डिजीलॉकर खाता जोड़ें। राशन कार्ड, आय और आयु प्रमाण पत्र स्वचालित रूप से प्राप्त करें।",
+    card1Btn: "डिजीलॉकर से लॉगिन करें",
+    card2Title: "आवाज़ से सहायता (हिंदी / EN)",
+    card2Desc:
+      "अपनी उम्र, वार्षिक आय और स्थिति हिंदी या अंग्रेजी में सामान्य रूप से बोलें। AI आपकी आवाज़ सुनकर पात्रता फॉर्म अपने आप भर देगा।",
+    card2Btn: "बोलकर जानकारी दर्ज करें",
+    card2StopBtn: "रिकॉर्डिंग रोकें",
+    card2Listening: "सुन रहे हैं... कृपया हिंदी या अंग्रेजी में बोलें",
+    card2SampleTranscript:
+      "\"मेरी उम्र 66 वर्ष है और मेरी वार्षिक पारिवारिक आय ₹42,000 है। मैं किन पेंशन योजनाओं के लिए आवेदन कर सकता हूँ?\"",
+    card3Title: "डॉक्यूमेंट डॉक्टर (स्पेलिंग जांच)",
+    card3Desc:
+      "आवेदन से पहले राशन कार्ड और बैंक पासबुक में नाम के अंतर (जैसे Sunita Devi बनाम Sunitha Devi) की तुरंत पहचान कर DBT रिजेक्शन रोकें।",
+    card3Btn: "दस्तावेज़ स्पेलिंग जांचें",
+    schemesHeading: "सत्यापित सरकारी योजनाएं और आधिकारिक पोर्टल",
+    schemesSubheading:
+      "NSAP, myScheme.gov.in और नेशनल स्कॉलरशिप पोर्टल के लाइव नियमों एवं सिटीजन चार्टर समय-सीमा (SLA) के साथ समन्वित।",
+    ministryLabel: "मंत्रालय / विभाग",
+    eligibilityLabel: "पात्रता मापदंड",
+    benefitLabel: "सीधा आर्थिक लाभ (DBT)",
+    slaBadgeSuffix: "दिन की कानूनी समय-सीमा",
+    applyDigiLockerBtn: "डिजीलॉकर से एक-क्लिक आवेदन",
+    visitPortalBtn: "आधिकारिक पोर्टल ↗",
+    eligibilityModalTitle: "तत्काल सरकारी पात्रता परीक्षण",
+    ageLabel: "नागरिक की आयु (वर्षों में)",
+    incomeLabel: "वार्षिक पारिवारिक आय (₹ रुपये में)",
+    checkNowBtn: "पात्रता की जांच करें",
+    eligibleMsg:
+      "✓ आप केंद्रीय NSAP और राज्य कल्याण योजनाओं के प्राथमिक आयु और आय मापदंडों को पूरा करते हैं! प्रमाण पत्र सत्यापन के लिए डिजीलॉकर से आगे बढ़ें।",
+    notEligibleMsg:
+      "ℹ दर्ज की गई आयु/आय के आधार पर, आप बीपीएल पेंशन सीमा से ऊपर हैं, लेकिन आप नीचे दी गई छात्रवृत्ति योजनाओं के लिए आवेदन कर सकते हैं।",
+    docModalTitle: "डॉक्यूमेंट डॉक्टर: नाम एवं बैंक DBT मिलान जांच",
+    docNameAadhaarLabel: "पहचान पत्र / राशन कार्ड पर नाम",
+    docNameBankLabel: "बैंक पासबुक पर नाम (DBT खाता)",
+    verifyMatchBtn: "स्पेलिंग और DBT मिलान जांचें",
+    matchWarning:
+      "⚠ स्पेलिंग में अंतर पाया गया! अक्षरों में मामूली अंतर है। बैंक DBT अस्वीकृति को रोकने के लिए स्वचालित घोषणा-पत्र (Annexure) तैयार कर दिया गया है।",
+    matchSuccess:
+      "✓ 100% सटीक मिलान! आपके दस्तावेज़ बिना किसी रुकावट के सीधे बैंक लाभ (DBT) के लिए तैयार हैं।",
+    slaPrefix: "लोक सेवा अधिकार (SLA):",
+    slaStrong: "30–45 दिन में निस्तारण की कानूनी गारंटी",
+    slaRight: "समय-सीमा पार होने पर ऑटो-CPGRAMS शिकायत निवारण सुविधा",
+    schemes: [
+      {
+        id: "ignoaps",
+        title: "इंदिरा गांधी राष्ट्रीय वृद्धावस्था पेंशन योजना (IGNOAPS)",
+        ministry: "ग्रामीण विकास मंत्रालय (भारत सरकार)",
+        level: "केंद्र सरकार • NSAP",
+        slaDays: 30,
+        charterClause: "लोक सेवा गारंटी अधिनियम • सिटीजन चार्टर धारा 4(1)",
+        eligibilityText: "आयु 60+ वर्ष • बीपीएल परिवार / वार्षिक आय ₹1,00,000 से कम",
+        benefitAmount: "₹1,000 – ₹2,500 / माह (केंद्र + राज्य अंशदान सीधे बैंक खाते में)",
+        portalUrl: "https://nsap.dord.gov.in",
+        guidelinesUrl: "https://www.myscheme.gov.in/schemes/ignoaps",
       },
-      voice: {
-        badge: "द्विभाषी व्हिस्पर एआई",
-        title: "वॉइस सहायता (हिंदी / English)",
-        description:
-          "अपनी उम्र, लिंग, पेशा और परिवार की स्थिति स्वाभाविक रूप से बोलें। द्विभाषी व्हिस्पर तकनीक द्वारा योजना आवश्यकताओं की स्वतः पूर्ति की जाती है।",
-        cta: "बोलें और आवेदन करें / Speak to Apply",
+      {
+        id: "ignwps",
+        title: "इंदिरा गांधी राष्ट्रीय विधवा पेंशन योजना (IGNWPS)",
+        ministry: "ग्रामीण विकास मंत्रालय (भारत सरकार)",
+        level: "केंद्र सरकार • NSAP",
+        slaDays: 30,
+        charterClause: "NSAP संचालन दिशानिर्देश एवं सिटीजन चार्टर SLA",
+        eligibilityText: "40–79 वर्ष की महिलाएं • बीपीएल श्रेणी / आय प्रमाण पत्र धारक",
+        benefitAmount: "₹1,500 – ₹2,500 / माह सीधा बैंक हस्तांतरण (DBT)",
+        portalUrl: "https://nsap.dord.gov.in",
+        guidelinesUrl: "https://www.myscheme.gov.in/schemes/ignwps",
       },
-      documentDoctor: {
-        badge: "डीबीटी / पीएफएमएस पूर्व-सत्यापन",
-        title: "दस्तावेज़ डॉक्टर (नाम वर्तनी मिलान)",
-        description:
-          "राशन कार्ड और बैंक पासबुक में 'सुनीता देवी बनाम सुनीथा देवी', 'चौधरी बनाम चौधरी' जैसी वर्तनी विसंगतियों को आवेदन से पूर्व पहचानकर डीबीटी बैंक विफलता को रोकता है।",
-        cta: "नाम विसंगति जांचें एवं सुधारें",
+      {
+        id: "nfbs",
+        title: "राष्ट्रीय पारिवारिक लाभ योजना (NFBS)",
+        ministry: "ग्रामीण विकास मंत्रालय (भारत सरकार)",
+        level: "केंद्र सरकार • NSAP",
+        slaDays: 45,
+        charterClause: "कानूनी पारिवारिक सहायता समय-सीमा गारंटी",
+        eligibilityText: "मुख्य कमाने वाले सदस्य (18–59 वर्ष) की मृत्यु पर बीपीएल परिवार को सहायता",
+        benefitAmount: "₹20,000 एकमुश्त सीधी सहायता राशि",
+        portalUrl: "https://nsap.dord.gov.in",
+        guidelinesUrl: "https://www.myscheme.gov.in/schemes/nfbs",
       },
-    },
-    schemesSection: {
-      sectionBadge: "वास्तविक समय नागरिक एकीकरण",
-      title: "सक्रिय सरकारी जन-कल्याण योजना निर्देशिका",
-      subtitle:
-        "केंद्रीय एनएसएपी (NSAP), राज्य समाज कल्याण और राष्ट्रीय छात्रवृत्ति पोर्टल से सत्यापित एवं वैधानिक नागरिक अधिकार पत्र से संरक्षित योजनाएं।",
-      filterAll: "सभी योजनाएं (4)",
-      filterCentral: "केंद्रीय एनएसएपी",
-      filterState: "राज्य समाज कल्याण",
-      filterScholarship: "छात्रवृत्ति",
-      criteriaLabel: "पात्रता मापदंड",
-      slaLabel: "वैधानिक समय-सीमा",
-      charterLabel: "नागरिक अधिकार पत्र क्लॉज",
-      visitPortalBtn: "आधिकारिक पोर्टल",
-    },
-    eligibilitySection: {
-      sectionBadge: "स्वचालित पात्रता कैलकुलेटर",
-      title: "पात्रता पूर्व-जांच एवं नागरिक कैलकुलेटर",
-      subtitle:
-        "बिना किसी डेटा भंडारण के, तुरंत अपनी पारिवारिक जानकारी दर्ज करें और अपनी योजना पात्रता जानें।",
-      ageLabel: "आवेदक की आयु (वर्ष)",
-      agePlaceholder: "उदा. 65",
-      incomeLabel: "पारिवारिक वार्षिक आय (₹)",
-      incomePlaceholder: "उदा. 120000",
-      categoryLabel: "सामाजिक वर्ग",
-      statusLabel: "आवेदक की स्थिति / प्रोफाइल",
-      statusOptions: {
-        senior: "वरिष्ठ नागरिक (आयु ६०+ वर्ष)",
-        widow: "विधवा (बीपीएल परिवार)",
-        student: "विद्यार्थी (उच्च शिक्षा)",
-        farmer: "लघु / सीमांत किसान",
-        general: "सामान्य नागरिक",
+      {
+        id: "nsp_post_matric",
+        title: "केंद्रीय क्षेत्र एवं पोस्ट-मैट्रिक छात्रवृत्ति योजना (NSP)",
+        ministry: "सामाजिक न्याय और अधिकारिता मंत्रालय / MeitY",
+        level: "केंद्र सरकार • NSP",
+        slaDays: 45,
+        charterClause: "नेशनल स्कॉलरशिप पोर्टल सत्यापन समय-सीमा",
+        eligibilityText: "कक्षा 11 से स्नातकोत्तर छात्र • पारिवारिक वार्षिक आय ≤ ₹2,50,000",
+        benefitAmount: "पूर्ण शिक्षण शुल्क प्रतिपूर्ति + शैक्षणिक भत्ता",
+        portalUrl: "https://scholarships.gov.in",
+        guidelinesUrl: "https://www.myscheme.gov.in",
       },
-      stateLabel: "राज्य / केंद्र शासित प्रदेश",
-      stateOptions: {
-        all: "अखिल भारतीय (राष्ट्रीय)",
-        delhi: "राष्ट्रीय राजधानी क्षेत्र दिल्ली",
-        up: "उत्तर प्रदेश",
-        bihar: "बिहार",
-        maharashtra: "महाराष्ट्र",
-      },
-      evaluateBtn: "योजना पात्रता की जांच करें ⚡",
-      resultEligibleCount: "पात्र योजनाएं पाई गईं",
-      resultEligibleBadge: "वैधानिक मिलान सत्यापित",
-      resultNone: "दर्ज विवरण के अनुसार कोई प्रत्यक्ष योजना नहीं मिली। कृपया अपनी आय या आयु सीमा की पुनः जांच करें।",
-    },
-    trackerSection: {
-      sectionBadge: "नागरिक अधिकार पत्र क्रियान्वयन",
-      title: "वैधानिक समय-सीमा (SLA) एवं आवेदन ट्रैकर",
-      subtitle:
-        "सरकारी जटिल कोड्स को पारदर्शी चरणों और वैधानिक निवारण उल्टी गिनती में बदलें।",
-      placeholder: "टोकन दर्ज करें (उदा. APP-82403435 या APP-SUNITA-ACTIVE-01)",
-      trackBtn: "स्थिति जांचें",
-      quickSampleTokens: "त्वरित परीक्षण टोकन:",
-      statusLabel: "वर्तमान स्थिति",
-      targetDateLabel: "वैधानिक निवारण अंतिम तिथि",
-      slaProgressLabel: "वैधानिक ३०-दिवसीय प्रगति",
-      escalationReady: "सीपीग्राम्स (CPGRAMS) विधिक अपील तैयार",
-      dbtStatusLabel: "डीबीटी खाता स्थिति",
-    },
-    slaRibbon: {
-      actTitle: "राज्य लोक सेवा गारंटी अधिनियम:",
-      slaGuarantee: "३०-दिवसीय अनिवार्य वैधानिक समय-सीमा",
-      escalationNotice:
-        "सरकारी समय-सीमा समाप्त होने पर स्वतः सीपीग्राम्स (CPGRAMS) एवं राज्य सीएम हेल्पलाइन विधिक अपील सक्रिय",
-    },
-    modals: {
-      voiceTitle: "द्विभाषी वॉइस सहायता",
-      voiceSubtitle: "हिंदी एवं अंग्रेजी में व्हिस्पर एआई वाणी अभिज्ञान",
-      voiceIdle: "सुनने के लिए तैयार। नीचे 'वॉइस इनटेक प्रारंभ करें' पर क्लिक करें।",
-      voiceRecording: "माइक्रोफ़ोन सक्रिय • हिंदी और अंग्रेजी में सुना जा रहा है...",
-      voiceSuccess: "वॉइस विवरण सफलता से प्राप्त हुआ! निष्कर्ष: विधवा पेंशन योजना के मापदंड सत्यापित।",
-      voiceSamplePrompt:
-        "स्वाभाविक रूप से बोलें। कहें: 'मैं सुनीता देवी हूँ, उम्र 65 वर्ष, मुझे विधवा पेंशन योजना का लाभ चाहिए' या 'मेरी आय 1.2 लाख है, छात्रवृत्ति आवेदन करना है'।",
-      voiceSampleHindi: "हिंदी उदाहरण: 'मेरी उम्र 65 वर्ष है, मैं विधवा पेंशन के लिए आवेदन करना चाहती हूँ।'",
-      voiceSampleEnglish: "English Sample: 'I am Amit Kumar, 20-year-old student applying for scholarship.'",
-      voiceStartBtn: "वॉइस इनटेक प्रारंभ करें 🎙",
-      voiceStopBtn: "वाणी विश्लेषण करें ⚡",
-      voiceClose: "विंडो बंद करें",
-      scannerTitle: "दस्तावेज़ डॉक्टर एवं वर्तनी विश्लेषक",
-      scannerSubtitle: "इन-मेमोरी भारतीय नाम व डीबीटी खाता सत्यापन",
-      scannerCard1Title: "आधार / राशन कार्ड का नाम",
-      scannerCard2Title: "बैंक पासबुक खाते का नाम",
-      scannerDetectedMismatch: "९५% ध्वन्यात्मक मिलान: 'सुनीता देवी' बनाम 'सुनीथा देवी' (अंतर: 'th' बनाम 't')",
-      scannerAdvice:
-        "बेनिफ़िट-ब्रिज आपके आवेदन को खारिज नहीं करता। इस वर्तनी भिन्नता को समय रहते सुधारने से बैंक डीबीटी विफलता नहीं होती।",
-      scannerLaunchPortal: "लाइव पोर्टल में स्कैनर खोलें ↗",
-      scannerClose: "बंद करें",
-    },
+    ],
   },
 };
 
 export default function App() {
-  const [isIntroActive, setIsIntroActive] = useState<boolean>(true);
-
-  // Requirement: Persist language selection in localStorage ('benefitbridge_lang')
+  const [animationStage, setAnimationStage] = useState<number>(0);
+  const [isIntroComplete, setIsIntroComplete] = useState<boolean>(false);
   const [selectedLanguage, setSelectedLanguage] = useState<Language>(() => {
-    if (typeof window !== "undefined") {
+    try {
       const saved = localStorage.getItem("benefitbridge_lang");
-      if (saved === "en" || saved === "hi") {
-        return saved;
-      }
+      return saved === "hi" ? "hi" : "en";
+    } catch {
+      return "en";
     }
-    return "en";
   });
 
-  // Schemes Filter State
-  const [activeSchemeTab, setActiveSchemeTab] = useState<"all" | "central" | "state" | "scholarship">("all");
-
-  // Eligibility Calculator State
+  // Interactive states for Voice, Eligibility, and Document Doctor
+  const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [showVoiceResult, setShowVoiceResult] = useState<boolean>(false);
   const [ageInput, setAgeInput] = useState<string>("65");
-  const [incomeInput, setIncomeInput] = useState<string>("0");
-  const [categoryInput, setCategoryInput] = useState<string>("OBC");
-  const [statusInput, setStatusInput] = useState<"senior" | "widow" | "student" | "farmer" | "general">("widow");
-  const [evaluatedSchemes, setEvaluatedSchemes] = useState<SchemeInfo[]>([]);
-  const [hasEvaluated, setHasEvaluated] = useState<boolean>(false);
-
-  // Application Tracker State
-  const sampleTrackedRecords: Record<string, TrackedApp> = {
-    "APP-82403435": {
-      id: "APP-82403435",
-      applicant: "Sunita Devi",
-      scheme: {
-        en: "Indira Gandhi National Widow Pension Scheme (IGNWPS)",
-        hi: "इंदिरा गांधी राष्ट्रीय विधवा पेंशन योजना (IGNWPS)",
-      },
-      status: "Under Review",
-      slaDaysTotal: 30,
-      slaDaysRemaining: 9,
-      targetDate: "23-Oct-2026",
-      dbtStatus: "Linked",
-    },
-    "APP-SUNITA-ACTIVE-01": {
-      id: "APP-SUNITA-ACTIVE-01",
-      applicant: "Sunita Devi",
-      scheme: {
-        en: "Indira Gandhi National Widow Pension Scheme (IGNWPS)",
-        hi: "इंदिरा गांधी राष्ट्रीय विधवा पेंशन योजना (IGNWPS)",
-      },
-      status: "Submitted",
-      slaDaysTotal: 30,
-      slaDaysRemaining: 21,
-      targetDate: "04-Nov-2026",
-      dbtStatus: "Variation Detected",
-    },
-    "APP-SCHOLAR-2026": {
-      id: "APP-SCHOLAR-2026",
-      applicant: "Amit Kumar",
-      scheme: {
-        en: "Post-Matric Scholarship for SC/ST/OBC Students",
-        hi: "अनुसूचित जाति/जनजाति/अन्य पिछड़ा वर्ग छात्रवृत्ति",
-      },
-      status: "Verified",
-      slaDaysTotal: 21,
-      slaDaysRemaining: 4,
-      targetDate: "18-Oct-2026",
-      dbtStatus: "Linked",
-    },
-  };
-
-  const [searchToken, setSearchToken] = useState<string>("APP-82403435");
-  const [currentTrackedApp, setCurrentTrackedApp] = useState<TrackedApp>(sampleTrackedRecords["APP-82403435"]);
-
-  // Modals & Interactive States
-  const [activeModal, setActiveModal] = useState<"none" | "voice" | "scanner">("none");
-  const [voiceRecordingState, setVoiceRecordingState] = useState<"idle" | "recording" | "success">("idle");
-
-  const underneathWordmarkRef = useRef<HTMLDivElement | null>(null);
-  const lenisRef = useRef<Lenis | null>(null);
-
-  // Sync selected language with localStorage and document.documentElement.lang
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("benefitbridge_lang", selectedLanguage);
-      document.documentElement.lang = selectedLanguage;
-    }
-  }, [selectedLanguage]);
-
-  // Evaluate initial scheme match on mount
-  useEffect(() => {
-    handleEvaluateEligibility();
-  }, [statusInput, ageInput, incomeInput]);
-
-  const handleEvaluateEligibility = () => {
-    const ageNum = parseInt(ageInput) || 0;
-    const incomeNum = parseInt(incomeInput) || 0;
-
-    const matched = SCHEMES_DATABASE.filter((scheme) => {
-      if (scheme.id === "widow_pension" && statusInput === "widow" && ageNum >= 40 && incomeNum <= 150000) {
-        return true;
-      }
-      if (scheme.id === "old_age_pension" && ageNum >= 60 && incomeNum <= 200000) {
-        return true;
-      }
-      if (scheme.id === "scholarship" && (statusInput === "student" || ageNum < 30) && incomeNum <= 250000) {
-        return true;
-      }
-      if (scheme.id === "family_benefit" && incomeNum <= 120000) {
-        return true;
-      }
-      return false;
-    });
-
-    setEvaluatedSchemes(matched);
-    setHasEvaluated(true);
-  };
-
-  const handleTrackSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const cleanToken = searchToken.trim().toUpperCase();
-    if (sampleTrackedRecords[cleanToken]) {
-      setCurrentTrackedApp(sampleTrackedRecords[cleanToken]);
-    } else {
-      setCurrentTrackedApp({
-        id: cleanToken || "APP-CUSTOM-001",
-        applicant: "Citizen Beneficiary",
-        scheme: {
-          en: "Statutory Citizen Scheme",
-          hi: "वैधानिक नागरिक योजना",
-        },
-        status: "Submitted",
-        slaDaysTotal: 30,
-        slaDaysRemaining: 18,
-        targetDate: "31-Oct-2026",
-        dbtStatus: "Linked",
-      });
-    }
-  };
-
-  // Initialize Lenis smooth scroll and sync with ScrollTrigger
-  useEffect(() => {
-    const lenis = new Lenis({
-      duration: 1.1,
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
-    });
-    lenisRef.current = lenis;
-
-    lenis.on("scroll", ScrollTrigger.update);
-
-    const updateTicker = (time: number) => {
-      lenis.raf(time * 1000);
-    };
-
-    gsap.ticker.add(updateTicker);
-    gsap.ticker.lagSmoothing(0);
-
-    return () => {
-      gsap.ticker.remove(updateTicker);
-      lenis.destroy();
-      lenisRef.current = null;
-    };
-  }, []);
-
-  // Lock scroll while Section 1 intro is running
-  useEffect(() => {
-    if (isIntroActive) {
-      lenisRef.current?.stop();
-      document.body.style.overflow = "hidden";
-    } else {
-      lenisRef.current?.start();
-      document.body.style.overflow = "";
-      ScrollTrigger.refresh();
-    }
-  }, [isIntroActive]);
+  const [incomeInput, setIncomeInput] = useState<string>("45000");
+  const [eligibilityChecked, setEligibilityChecked] = useState<boolean>(false);
+  const [nameAadhaar, setNameAadhaar] = useState<string>("Sunita Devi");
+  const [nameBank, setNameBank] = useState<string>("Sunitha Devi");
+  const [docChecked, setDocChecked] = useState<boolean>(false);
 
   const t = TRANSLATIONS[selectedLanguage];
 
-  const filteredSchemes =
-    activeSchemeTab === "all"
-      ? SCHEMES_DATABASE
-      : SCHEMES_DATABASE.filter((s) => s.category === activeSchemeTab);
+  const handleLanguageChange = (lang: Language) => {
+    setSelectedLanguage(lang);
+    try {
+      localStorage.setItem("benefitbridge_lang", lang);
+    } catch {
+      // Ignore storage errors in restricted iframes
+    }
+    document.documentElement.lang = lang;
+  };
+
+  useEffect(() => {
+    document.documentElement.lang = selectedLanguage;
+
+    const t1 = setTimeout(() => setAnimationStage(1), 150);
+    const t2 = setTimeout(() => setAnimationStage(2), 800);
+    const t3 = setTimeout(() => setAnimationStage(3), 1700);
+    const t4 = setTimeout(() => {
+      setAnimationStage(4);
+      setTimeout(() => setIsIntroComplete(true), 600);
+    }, 2800);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
+    };
+  }, [selectedLanguage]);
+
+  const skipIntro = () => {
+    setAnimationStage(4);
+    setTimeout(() => setIsIntroComplete(true), 150);
+  };
+
+  const toggleVoiceRecording = () => {
+    if (!isRecording) {
+      setIsRecording(true);
+      setShowVoiceResult(false);
+      setTimeout(() => {
+        setIsRecording(false);
+        setShowVoiceResult(true);
+        setAgeInput("66");
+        setIncomeInput("42000");
+        setEligibilityChecked(true);
+      }, 2200);
+    } else {
+      setIsRecording(false);
+    }
+  };
+
+  const isEligible =
+    Number(ageInput) >= 40 && Number(incomeInput) <= 250000;
+
+  const isExactNameMatch =
+    nameAadhaar.trim().toLowerCase() === nameBank.trim().toLowerCase();
 
   return (
-    <div className="min-h-screen bg-[#FFFDF9] text-[#1A0F12] font-body selection:bg-[#DC2626] selection:text-white relative overflow-x-hidden">
-      {/* Soft Ambient Rose & Amber Radial Glows */}
-      <div className="fixed top-0 left-1/4 w-[500px] h-[500px] bg-red-100/40 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="fixed top-1/3 right-10 w-[450px] h-[450px] bg-amber-100/40 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="fixed bottom-10 left-1/3 w-[500px] h-[500px] bg-orange-100/30 rounded-full blur-3xl pointer-events-none -z-10" />
+    <div className="min-h-screen bg-[#FFFDF9] text-[#1C1917] font-sans relative overflow-x-hidden selection:bg-[#DC2626] selection:text-white">
+      {/* Ambient Background Light Blobs for Glass Reflections */}
+      <div className="fixed top-[-10%] left-[-5%] w-[520px] h-[520px] rounded-full bg-gradient-to-br from-[#FECACA]/45 via-[#FEE2E2]/35 to-transparent blur-[120px] pointer-events-none" />
+      <div className="fixed top-[45%] right-[-10%] w-[580px] h-[580px] rounded-full bg-gradient-to-bl from-[#FEE2E2]/50 via-[#FED7AA]/30 to-transparent blur-[140px] pointer-events-none" />
+      <div className="fixed bottom-[-10%] left-[20%] w-[500px] h-[500px] rounded-full bg-gradient-to-t from-[#FEE2E2]/30 via-transparent to-transparent blur-[130px] pointer-events-none" />
 
-      {/* ---------------- SECTION 1: INTRO / PRELOADER HERO (4-Stage Startup) ---------------- */}
-      {isIntroActive && (
-        <Section1Intro
-          onComplete={() => setIsIntroActive(false)}
-          underneathWordmarkRef={underneathWordmarkRef}
-        />
-      )}
-
-      {/* ---------------- TOP GLASS NAVBAR (Red & Cream Glassmorphism) ---------------- */}
-      <header className="sticky top-0 z-40 bg-white/70 backdrop-blur-xl border-b border-white/90 shadow-2xs transition-all">
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between text-xs font-sans">
-          {/* Brand & Subtitle */}
-          <div className="flex items-center gap-3">
-            <span className="font-extrabold tracking-tight text-[#991B1B] text-base sm:text-lg">
-              {t.nav.brand}
-            </span>
-            <span className="text-[#1A0F12]/20 font-light">/</span>
-            <span className="hidden lg:inline font-medium text-[#1A0F12]/75">
-              {t.nav.taglineDesktop}
-            </span>
-            <span className="lg:hidden sm:inline hidden font-medium text-[#1A0F12]/75">
-              {t.nav.taglineMobile}
-            </span>
-          </div>
-
-          {/* Navigation Links */}
-          <nav className="hidden md:flex items-center gap-6 text-[11px] font-medium text-[#1A0F12]/80">
-            <a href="#dashboard" className="hover:text-[#DC2626] transition-colors">
-              {t.nav.tabDashboard}
-            </a>
-            <a href="#eligibility" className="hover:text-[#DC2626] transition-colors">
-              {t.nav.tabEligibility}
-            </a>
-            <a href="#schemes" className="hover:text-[#DC2626] transition-colors">
-              {t.nav.tabSchemes}
-            </a>
-            <a href="#tracker" className="hover:text-[#DC2626] transition-colors">
-              {t.nav.tabTrack}
-            </a>
-          </nav>
-
-          {/* Controls: Live Gateway Badge, Language Switcher, Portal Link */}
-          <div className="flex items-center gap-3 sm:gap-4">
-            {/* Live Gateway Badge */}
-            <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-semibold">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>{t.nav.liveGatewayBadge}</span>
-            </div>
-
-            {/* Language Switcher Button Group */}
+      {/* ---------------- 1. GLASS INTRO OVERLAY ---------------- */}
+      {!isIntroComplete && (
+        <div
+          className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#FFFDF9]/85 backdrop-blur-2xl transition-all duration-700 ease-out ${
+            animationStage === 4
+              ? "opacity-0 scale-105 pointer-events-none"
+              : "opacity-100 scale-100"
+          }`}
+        >
+          {/* Central Frosted Glass Emblem */}
+          <div className="relative flex items-center justify-center mb-8">
             <div
-              className="flex items-center border border-[#1A0F12]/15 rounded-full p-0.5 bg-white/90 shadow-2xs backdrop-blur-md text-[11px]"
-              role="group"
-              aria-label="Language selection"
+              className={`absolute -inset-6 rounded-full bg-gradient-to-r from-[#DC2626] to-[#EF4444] opacity-30 blur-2xl transition-all duration-1000 ${
+                animationStage >= 1
+                  ? "scale-125 opacity-40"
+                  : "scale-75 opacity-0"
+              }`}
+            />
+            <div
+              className={`relative w-28 h-28 rounded-3xl bg-white/75 backdrop-blur-xl border border-white/90 shadow-[0_20px_50px_rgba(220,38,38,0.22)] flex items-center justify-center transition-all duration-700 ease-out ${
+                animationStage >= 1
+                  ? "scale-100 rotate-0 opacity-100"
+                  : "scale-50 rotate-12 opacity-0"
+              }`}
             >
-              <button
-                type="button"
-                onClick={() => setSelectedLanguage("en")}
-                className={`px-3 py-1 rounded-full font-bold transition-all cursor-pointer ${
-                  selectedLanguage === "en"
-                    ? "bg-[#DC2626] text-white shadow-xs"
-                    : "text-[#1A0F12]/70 hover:text-[#1A0F12]"
-                }`}
-                aria-pressed={selectedLanguage === "en"}
-                aria-label="Switch language to English"
-              >
-                EN
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedLanguage("hi")}
-                className={`px-3 py-1 rounded-full font-bold transition-all cursor-pointer ${
-                  selectedLanguage === "hi"
-                    ? "bg-[#DC2626] text-white shadow-xs"
-                    : "text-[#1A0F12]/70 hover:text-[#1A0F12]"
-                }`}
-                aria-pressed={selectedLanguage === "hi"}
-                aria-label="भाषा हिंदी में बदलें"
-              >
-                हिंदी
-              </button>
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#DC2626] to-[#EF4444] flex items-center justify-center shadow-lg shadow-red-600/30">
+                <svg
+                  className="w-9 h-9 text-white drop-shadow-md"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.2"
+                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                  />
+                </svg>
+              </div>
             </div>
-
-            {/* API Docs Button */}
-            <a
-              href={getApiDocsUrl()}
-              target="_blank"
-              rel="noreferrer"
-              className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold text-[#1A0F12]/75 hover:text-[#DC2626] transition-colors"
-            >
-              <span>{t.nav.apiDocsBtn}</span>
-              <span aria-hidden="true">↗</span>
-            </a>
-
-            {/* Live Portal Button */}
-            <a
-              href={getPortalUrl()}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#DC2626]/10 hover:bg-[#DC2626]/15 border border-[#DC2626]/30 text-[11px] font-bold text-[#991B1B] hover:text-[#DC2626] transition-all"
-            >
-              <span>{t.nav.livePortalBtn}</span>
-              <span aria-hidden="true">↗</span>
-            </a>
           </div>
-        </div>
-      </header>
 
-      {/* ---------------- SECTION 2: STATEMENT (CINEMATIC) ---------------- */}
-      <Section2Statement underneathWordmarkRef={underneathWordmarkRef} />
-
-      {/* ---------------- SECTION 3: FOCUS (PINNED) ---------------- */}
-      <Section3Focus />
-
-      {/* ---------------- SECTION 4: THE JOURNEY TICKETS (3D FLY-IN) ---------------- */}
-      <Section4JourneyTickets />
-
-      {/* ---------------- SECTION 5: WHO DECIDES (RED FULL-BLEED) ---------------- */}
-      <Section5WhoDecides />
-
-      {/* ---------------- HERO BANNER & STATS ---------------- */}
-      <section id="dashboard" className="w-full max-w-7xl mx-auto px-6 sm:px-12 pt-20 pb-12">
-        <div className="p-8 sm:p-12 rounded-3xl bg-white/70 backdrop-blur-xl border border-white/90 shadow-sm relative overflow-hidden space-y-8">
-          <div className="max-w-3xl space-y-4">
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#DC2626]/10 border border-[#DC2626]/20 text-[#991B1B] text-[10px] font-mono uppercase font-bold tracking-wider">
-              {t.hero.badge}
-            </span>
-            <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-[#1A0F12] leading-[1.15]">
-              {t.hero.headline}
+          {/* Titles & Bilingual Subtitle */}
+          <div className="text-center space-y-2.5 px-4 z-10">
+            <h1
+              className={`text-4xl md:text-5xl font-black tracking-tight text-[#991B1B] transition-all duration-700 ease-out ${
+                animationStage >= 2
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-4 opacity-0"
+              }`}
+            >
+              BenefitBridge
             </h1>
-            <p className="text-sm sm:text-base text-[#1A0F12]/75 font-light leading-relaxed">
-              {t.hero.subtitle}
+            <p
+              className={`text-sm md:text-base font-semibold text-[#78716C] max-w-md transition-all duration-700 delay-100 ${
+                animationStage >= 2
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-3 opacity-0"
+              }`}
+            >
+              {t.brandTagline}
             </p>
           </div>
 
-          {/* Quick Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-[#1A0F12]/10">
-            <div className="p-4 rounded-2xl bg-white/80 border border-white/80 shadow-2xs">
-              <span className="text-2xl sm:text-3xl font-extrabold text-[#991B1B] block">
-                {t.hero.stat1Val}
-              </span>
-              <span className="text-[11px] text-[#1A0F12]/70 font-medium">
-                {t.hero.stat1Label}
-              </span>
+          {/* Frosted Status Capsule */}
+          <div
+            className={`mt-10 flex items-center gap-3 px-5 py-2.5 rounded-full bg-white/70 backdrop-blur-xl border border-white/80 shadow-[0_8px_32px_rgba(220,38,38,0.12)] transition-all duration-500 z-10 ${
+              animationStage >= 3
+                ? "opacity-100 scale-100"
+                : "opacity-0 scale-95"
+            }`}
+          >
+            <span className="w-2.5 h-2.5 rounded-full bg-[#16A34A] animate-ping" />
+            <span className="text-xs font-bold tracking-wide text-[#7F1D1D]">
+              {t.dpiReady}
+            </span>
+          </div>
+
+          {/* Skip Intro */}
+          <button
+            type="button"
+            onClick={skipIntro}
+            className="absolute bottom-8 right-8 text-xs text-[#A8A29E] hover:text-[#DC2626] transition-colors uppercase tracking-widest font-black cursor-pointer"
+          >
+            {t.skipIntro}
+          </button>
+        </div>
+      )}
+
+      {/* ---------------- 2. MAIN GLASS DASHBOARD ---------------- */}
+      <div
+        className={`transition-opacity duration-700 ${
+          isIntroComplete ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        {/* Floating Glass Navigation Header */}
+        <header className="sticky top-4 z-40 max-w-7xl mx-auto px-4 sm:px-6 mb-4">
+          <div className="rounded-2xl bg-white/75 backdrop-blur-xl border border-white/90 shadow-[0_8px_30px_rgb(0,0,0,0.04)] px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#DC2626] to-[#EF4444] flex items-center justify-center shadow-md shadow-red-600/25">
+                <span className="text-white font-black text-xl">B</span>
+              </div>
+              <div>
+                <span className="font-black text-xl text-[#991B1B] tracking-tight">
+                  BenefitBridge
+                </span>
+                <span className="hidden md:inline-block ml-3 px-3 py-0.5 text-[11px] font-bold bg-[#DC2626]/10 text-[#DC2626] border border-[#DC2626]/20 rounded-full">
+                  {t.liveGateway}
+                </span>
+              </div>
             </div>
-            <div className="p-4 rounded-2xl bg-white/80 border border-white/80 shadow-2xs">
-              <span className="text-2xl sm:text-3xl font-extrabold text-[#DC2626] block">
-                {t.hero.stat2Val}
-              </span>
-              <span className="text-[11px] text-[#1A0F12]/70 font-medium">
-                {t.hero.stat2Label}
-              </span>
-            </div>
-            <div className="p-4 rounded-2xl bg-white/80 border border-white/80 shadow-2xs">
-              <span className="text-2xl sm:text-3xl font-extrabold text-amber-600 block">
-                {t.hero.stat3Val}
-              </span>
-              <span className="text-[11px] text-[#1A0F12]/70 font-medium">
-                {t.hero.stat3Label}
-              </span>
-            </div>
-            <div className="p-4 rounded-2xl bg-white/80 border border-white/80 shadow-2xs">
-              <span className="text-2xl sm:text-3xl font-extrabold text-emerald-700 block">
-                {t.hero.stat4Val}
-              </span>
-              <span className="text-[11px] text-[#1A0F12]/70 font-medium">
-                {t.hero.stat4Label}
-              </span>
+
+            {/* Quick Section Anchor Links */}
+            <nav className="hidden lg:flex items-center gap-6 text-xs font-bold text-[#78716C]">
+              <a href="#overview" className="hover:text-[#DC2626] transition-colors">
+                {t.navOverview}
+              </a>
+              <a href="#schemes" className="hover:text-[#DC2626] transition-colors">
+                {t.navSchemes}
+              </a>
+              <a href="#interactive-tools" className="hover:text-[#DC2626] transition-colors">
+                {t.navEligibility}
+              </a>
+              <a href="#interactive-tools" className="hover:text-[#DC2626] transition-colors">
+                {t.navDocDoctor}
+              </a>
+            </nav>
+
+            <div className="flex items-center gap-2.5">
+              {/* Frosted Language Switcher */}
+              <div className="bg-[#FFFDF9]/90 backdrop-blur-md border border-[#F5EBE1] p-1 rounded-xl flex text-xs font-bold shadow-inner">
+                <button
+                  type="button"
+                  onClick={() => handleLanguageChange("en")}
+                  className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    selectedLanguage === "en"
+                      ? "bg-[#DC2626] text-white shadow-sm"
+                      : "text-[#78716C] hover:text-[#1C1917]"
+                  }`}
+                >
+                  EN
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleLanguageChange("hi")}
+                  className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    selectedLanguage === "hi"
+                      ? "bg-[#DC2626] text-white shadow-sm"
+                      : "text-[#78716C] hover:text-[#1C1917]"
+                  }`}
+                >
+                  हिंदी
+                </button>
+              </div>
+
+              <a
+                href={getPortalUrl("/docs")}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs bg-white/90 hover:bg-[#FEE2E2]/60 text-[#991B1B] px-3.5 py-2 rounded-xl border border-[#FEE2E2] shadow-sm font-bold transition-all"
+              >
+                {t.apiDocs}
+              </a>
             </div>
           </div>
-        </div>
-      </section>
+        </header>
 
-      {/* ---------------- INTERACTIVE FEATURE HUB (3 GLASS CARDS) ---------------- */}
-      <section className="w-full max-w-7xl mx-auto px-6 sm:px-12 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1: DigiLocker Direct Apply */}
-          <div className="rounded-3xl p-7 bg-white/65 backdrop-blur-xl border border-white/90 shadow-sm hover:border-[#DC2626]/40 hover:shadow-xl hover:shadow-red-500/5 transition-all flex flex-col justify-between group">
-            <div>
-              <div className="flex items-center justify-between mb-5">
-                <div className="w-12 h-12 rounded-2xl bg-[#DC2626]/10 border border-[#DC2626]/20 flex items-center justify-center text-[#DC2626] group-hover:scale-105 transition-transform">
+        {/* Hero & Glass Content Container */}
+        <main id="overview" className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-12">
+          <div className="text-center max-w-3xl mx-auto space-y-4">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 backdrop-blur-lg border border-[#FEE2E2] text-[#DC2626] text-xs font-extrabold tracking-wide shadow-sm">
+              <span>{t.heroBadge}</span>
+            </div>
+            <h2 className="text-3xl md:text-5xl font-black text-[#1C1917] tracking-tight leading-tight">
+              {t.heroTitle}
+            </h2>
+            <p className="text-[#78716C] text-base md:text-lg font-medium leading-relaxed">
+              {t.heroSubtitle}
+            </p>
+          </div>
+
+          {/* 3 Core Interactive Glassmorphic Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Card 1: DigiLocker Direct Apply */}
+            <div className="relative group p-7 rounded-3xl bg-white/65 backdrop-blur-xl border border-white/90 hover:border-[#DC2626]/50 shadow-[0_12px_40px_rgba(220,38,38,0.06)] hover:shadow-[0_20px_50px_rgba(220,38,38,0.14)] transition-all flex flex-col justify-between overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#FEE2E2]/40 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-transform" />
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-white/90 border border-[#FEE2E2] flex items-center justify-center text-[#DC2626] mb-5 shadow-sm">
                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
                   </svg>
                 </div>
-                <span className="text-[10px] font-mono uppercase px-2.5 py-1 rounded-full bg-[#991B1B]/10 text-[#991B1B] font-bold border border-[#991B1B]/20">
-                  {t.cards.digilocker.badge}
-                </span>
+                <h3 className="text-xl font-extrabold text-[#1C1917] mb-2">
+                  {t.card1Title}
+                </h3>
+                <p className="text-xs text-[#78716C] mb-6 leading-relaxed font-medium">
+                  {t.card1Desc}
+                </p>
               </div>
-              <h3 className="text-xl font-bold text-[#1A0F12] mb-2 group-hover:text-[#991B1B] transition-colors">
-                {t.cards.digilocker.title}
-              </h3>
-              <p className="text-xs text-[#1A0F12]/75 leading-relaxed font-light">
-                {t.cards.digilocker.description}
-              </p>
+              <a
+                href={getDigiLockerUrl("ignoaps")}
+                className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:from-[#B91C1C] hover:to-[#991B1B] text-white text-xs font-bold transition-all shadow-lg shadow-red-600/30 active:scale-[0.98]"
+              >
+                {t.card1Btn}
+              </a>
             </div>
-            <a
-              href={getDigiLockerUrl()}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-8 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[#DC2626] hover:bg-[#991B1B] text-white text-xs font-bold shadow-md shadow-red-600/20 transition-all hover:gap-3"
-            >
-              <span>{t.cards.digilocker.cta}</span>
-              <span aria-hidden="true">→</span>
-            </a>
-          </div>
 
-          {/* Card 2: Voice Assistance / Whisper AI */}
-          <div className="rounded-3xl p-7 bg-white/65 backdrop-blur-xl border border-white/90 shadow-sm hover:border-[#DC2626]/40 hover:shadow-xl hover:shadow-red-500/5 transition-all flex flex-col justify-between group">
-            <div>
-              <div className="flex items-center justify-between mb-5">
-                <div className="w-12 h-12 rounded-2xl bg-[#991B1B]/10 border border-[#991B1B]/20 flex items-center justify-center text-[#991B1B] group-hover:scale-105 transition-transform">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {/* Card 2: Voice Input */}
+            <div className="relative group p-7 rounded-3xl bg-white/65 backdrop-blur-xl border border-white/90 hover:border-[#DC2626]/40 shadow-[0_12px_40px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_50px_rgba(220,38,38,0.08)] transition-all flex flex-col justify-between overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#FFEDD5]/40 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-transform" />
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-white/90 border border-[#FEE2E2] flex items-center justify-center text-[#BE123C] mb-5 shadow-sm">
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth="2"
+                      strokeWidth="2.2"
                       d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
                     />
                   </svg>
                 </div>
-                <span className="text-[10px] font-mono uppercase px-2.5 py-1 rounded-full bg-[#DC2626]/10 text-[#DC2626] font-bold border border-[#DC2626]/20">
-                  {t.cards.voice.badge}
-                </span>
+                <h3 className="text-xl font-extrabold text-[#1C1917] mb-2">
+                  {t.card2Title}
+                </h3>
+                <p className="text-xs text-[#78716C] mb-4 leading-relaxed font-medium">
+                  {t.card2Desc}
+                </p>
+                {isRecording && (
+                  <div className="mb-4 p-3 rounded-xl bg-[#FEE2E2]/70 border border-[#FECACA] text-[11px] font-bold text-[#991B1B] flex items-center gap-2 animate-pulse">
+                    <span className="w-2 h-2 rounded-full bg-[#DC2626]" />
+                    {t.card2Listening}
+                  </div>
+                )}
+                {showVoiceResult && (
+                  <div className="mb-4 p-3 rounded-xl bg-white/90 border border-[#F5EBE1] text-[11px] italic text-[#57534E]">
+                    {t.card2SampleTranscript}
+                  </div>
+                )}
               </div>
-              <h3 className="text-xl font-bold text-[#1A0F12] mb-2 group-hover:text-[#991B1B] transition-colors">
-                {t.cards.voice.title}
-              </h3>
-              <p className="text-xs text-[#1A0F12]/75 leading-relaxed font-light">
-                {t.cards.voice.description}
-              </p>
+              <button
+                type="button"
+                onClick={toggleVoiceRecording}
+                className={`w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl text-xs font-bold border transition-all cursor-pointer shadow-sm active:scale-[0.98] ${
+                  isRecording
+                    ? "bg-[#DC2626] text-white border-[#DC2626]"
+                    : "bg-white/90 hover:bg-[#FEE2E2]/60 text-[#991B1B] border-[#FEE2E2]"
+                }`}
+              >
+                {isRecording ? t.card2StopBtn : t.card2Btn}
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setVoiceRecordingState("idle");
-                setActiveModal("voice");
-              }}
-              className="mt-8 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border border-[#DC2626]/30 hover:border-[#DC2626] bg-white hover:bg-[#DC2626]/5 text-[#991B1B] hover:text-[#DC2626] text-xs font-bold transition-all cursor-pointer shadow-2xs"
-            >
-              <span>{t.cards.voice.cta}</span>
-              <span aria-hidden="true">🎙</span>
-            </button>
-          </div>
 
-          {/* Card 3: Document Doctor / Spelling Mismatch Scanner */}
-          <div className="rounded-3xl p-7 bg-white/65 backdrop-blur-xl border border-white/90 shadow-sm hover:border-[#DC2626]/40 hover:shadow-xl hover:shadow-red-500/5 transition-all flex flex-col justify-between group">
-            <div>
-              <div className="flex items-center justify-between mb-5">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-700 group-hover:scale-105 transition-transform">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {/* Card 3: Document Doctor */}
+            <div className="relative group p-7 rounded-3xl bg-white/65 backdrop-blur-xl border border-white/90 hover:border-[#DC2626]/40 shadow-[0_12px_40px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_50px_rgba(220,38,38,0.08)] transition-all flex flex-col justify-between overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#DCFCE7]/40 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-transform" />
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-white/90 border border-[#FEE2E2] flex items-center justify-center text-[#15803D] mb-5 shadow-sm">
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth="2"
+                      strokeWidth="2.2"
                       d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
                 </div>
-                <span className="text-[10px] font-mono uppercase px-2.5 py-1 rounded-full bg-amber-50 text-amber-900 font-bold border border-amber-200">
-                  {t.cards.documentDoctor.badge}
-                </span>
-              </div>
-              <h3 className="text-xl font-bold text-[#1A0F12] mb-2 group-hover:text-[#991B1B] transition-colors">
-                {t.cards.documentDoctor.title}
-              </h3>
-              <p className="text-xs text-[#1A0F12]/75 leading-relaxed font-light">
-                {t.cards.documentDoctor.description}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setActiveModal("scanner")}
-              className="mt-8 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border border-[#1A0F12]/20 hover:border-[#DC2626] bg-white hover:bg-[#DC2626]/5 text-[#1A0F12] hover:text-[#DC2626] text-xs font-bold transition-all cursor-pointer shadow-2xs"
-            >
-              <span>{t.cards.documentDoctor.cta}</span>
-              <span aria-hidden="true">→</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------------- INTERACTIVE SECTION 1: SCHEMES & PORTALS DIRECTORY ---------------- */}
-      <section id="schemes" className="w-full max-w-7xl mx-auto px-6 sm:px-12 py-12 space-y-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div className="space-y-1">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-[#DC2626] font-bold block">
-              {t.schemesSection.sectionBadge}
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-[#1A0F12] tracking-tight">
-              {t.schemesSection.title}
-            </h2>
-            <p className="text-xs sm:text-sm text-[#1A0F12]/75 font-light max-w-2xl">
-              {t.schemesSection.subtitle}
-            </p>
-          </div>
-
-          {/* Filter Tabs */}
-          <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-2xl bg-white/80 border border-white/90 shadow-2xs">
-            <button
-              type="button"
-              onClick={() => setActiveSchemeTab("all")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeSchemeTab === "all"
-                  ? "bg-[#DC2626] text-white shadow-xs"
-                  : "text-[#1A0F12]/70 hover:text-[#1A0F12]"
-              }`}
-            >
-              {t.schemesSection.filterAll}
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveSchemeTab("central")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeSchemeTab === "central"
-                  ? "bg-[#DC2626] text-white shadow-xs"
-                  : "text-[#1A0F12]/70 hover:text-[#1A0F12]"
-              }`}
-            >
-              {t.schemesSection.filterCentral}
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveSchemeTab("state")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeSchemeTab === "state"
-                  ? "bg-[#DC2626] text-white shadow-xs"
-                  : "text-[#1A0F12]/70 hover:text-[#1A0F12]"
-              }`}
-            >
-              {t.schemesSection.filterState}
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveSchemeTab("scholarship")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeSchemeTab === "scholarship"
-                  ? "bg-[#DC2626] text-white shadow-xs"
-                  : "text-[#1A0F12]/70 hover:text-[#1A0F12]"
-              }`}
-            >
-              {t.schemesSection.filterScholarship}
-            </button>
-          </div>
-        </div>
-
-        {/* Scheme Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredSchemes.map((scheme) => (
-            <div
-              key={scheme.id}
-              className="p-6 sm:p-7 rounded-3xl bg-white/70 backdrop-blur-xl border border-white/90 shadow-sm hover:border-[#DC2626]/40 hover:shadow-lg transition-all flex flex-col justify-between space-y-6"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#991B1B]">
-                    {scheme.ministry[selectedLanguage]}
-                  </span>
-                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-red-50 text-[#DC2626] border border-red-200">
-                    {scheme.badge[selectedLanguage]}
-                  </span>
-                </div>
-
-                <h3 className="text-lg sm:text-xl font-bold text-[#1A0F12] leading-snug">
-                  {scheme.title[selectedLanguage]}
+                <h3 className="text-xl font-extrabold text-[#1C1917] mb-2">
+                  {t.card3Title}
                 </h3>
-
-                <p className="text-xs text-[#1A0F12]/75 leading-relaxed font-light">
-                  {scheme.description[selectedLanguage]}
+                <p className="text-xs text-[#78716C] mb-6 leading-relaxed font-medium">
+                  {t.card3Desc}
                 </p>
-
-                <div className="pt-3 border-t border-[#1A0F12]/10 space-y-2 text-xs">
-                  <div>
-                    <span className="font-bold text-[#1A0F12] block mb-0.5">
-                      {t.schemesSection.criteriaLabel}:
-                    </span>
-                    <span className="text-[#1A0F12]/70 font-light">
-                      {scheme.criteria[selectedLanguage]}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="font-bold text-[#991B1B] block mb-0.5">
-                      {t.schemesSection.charterLabel}:
-                    </span>
-                    <span className="text-[#1A0F12]/70 font-light text-[11px]">
-                      {scheme.charter[selectedLanguage]}
-                    </span>
-                  </div>
-                </div>
               </div>
-
-              <div className="pt-4 border-t border-[#1A0F12]/10 flex items-center justify-between">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold">
-                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                  <span>{scheme.sla[selectedLanguage]}</span>
-                </div>
-
-                <a
-                  href={scheme.portalUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-[#DC2626] hover:bg-[#991B1B] text-white text-xs font-bold shadow-xs transition-all"
-                >
-                  <span>{t.schemesSection.visitPortalBtn}</span>
-                  <span aria-hidden="true">↗</span>
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ---------------- INTERACTIVE SECTION 2: ELIGIBILITY PRE-SCREENING ---------------- */}
-      <section id="eligibility" className="w-full max-w-7xl mx-auto px-6 sm:px-12 py-12">
-        <div className="p-8 sm:p-12 rounded-3xl bg-white/70 backdrop-blur-xl border border-white/90 shadow-sm space-y-8">
-          <div className="space-y-1">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-[#DC2626] font-bold block">
-              {t.eligibilitySection.sectionBadge}
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1A0F12]">
-              {t.eligibilitySection.title}
-            </h2>
-            <p className="text-xs sm:text-sm text-[#1A0F12]/75 font-light">
-              {t.eligibilitySection.subtitle}
-            </p>
-          </div>
-
-          {/* Calculator Inputs Form */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {/* Age Input */}
-            <div className="space-y-1.5">
-              <label htmlFor="age-input" className="text-xs font-bold text-[#1A0F12] block">
-                {t.eligibilitySection.ageLabel}
-              </label>
-              <input
-                id="age-input"
-                type="number"
-                value={ageInput}
-                onChange={(e) => setAgeInput(e.target.value)}
-                placeholder={t.eligibilitySection.agePlaceholder}
-                className="w-full px-4 py-2.5 rounded-xl border border-[#1A0F12]/15 bg-white text-xs font-medium focus:outline-hidden focus:border-[#DC2626]"
-              />
-            </div>
-
-            {/* Income Input */}
-            <div className="space-y-1.5">
-              <label htmlFor="income-input" className="text-xs font-bold text-[#1A0F12] block">
-                {t.eligibilitySection.incomeLabel}
-              </label>
-              <input
-                id="income-input"
-                type="number"
-                value={incomeInput}
-                onChange={(e) => setIncomeInput(e.target.value)}
-                placeholder={t.eligibilitySection.incomePlaceholder}
-                className="w-full px-4 py-2.5 rounded-xl border border-[#1A0F12]/15 bg-white text-xs font-medium focus:outline-hidden focus:border-[#DC2626]"
-              />
-            </div>
-
-            {/* Category */}
-            <div className="space-y-1.5">
-              <label htmlFor="category-select" className="text-xs font-bold text-[#1A0F12] block">
-                {t.eligibilitySection.categoryLabel}
-              </label>
-              <select
-                id="category-select"
-                value={categoryInput}
-                onChange={(e) => setCategoryInput(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-[#1A0F12]/15 bg-white text-xs font-medium focus:outline-hidden focus:border-[#DC2626]"
-              >
-                <option value="General">General</option>
-                <option value="OBC">OBC (अन्य पिछड़ा वर्ग)</option>
-                <option value="SC">SC (अनुसूचित जाति)</option>
-                <option value="ST">ST (अनुसूचित जनजाति)</option>
-                <option value="EWS">EWS (आर्थिक रूप से कमजोर)</option>
-              </select>
-            </div>
-
-            {/* Status */}
-            <div className="space-y-1.5">
-              <label htmlFor="status-select" className="text-xs font-bold text-[#1A0F12] block">
-                {t.eligibilitySection.statusLabel}
-              </label>
-              <select
-                id="status-select"
-                value={statusInput}
-                onChange={(e) => setStatusInput(e.target.value as any)}
-                className="w-full px-3 py-2.5 rounded-xl border border-[#1A0F12]/15 bg-white text-xs font-medium focus:outline-hidden focus:border-[#DC2626]"
-              >
-                <option value="widow">{t.eligibilitySection.statusOptions.widow}</option>
-                <option value="senior">{t.eligibilitySection.statusOptions.senior}</option>
-                <option value="student">{t.eligibilitySection.statusOptions.student}</option>
-                <option value="farmer">{t.eligibilitySection.statusOptions.farmer}</option>
-                <option value="general">{t.eligibilitySection.statusOptions.general}</option>
-              </select>
-            </div>
-
-            {/* Evaluate Button */}
-            <div className="flex items-end">
-              <button
-                type="button"
-                onClick={handleEvaluateEligibility}
-                className="w-full py-2.5 px-4 rounded-xl bg-[#DC2626] hover:bg-[#991B1B] text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
-              >
-                {t.eligibilitySection.evaluateBtn}
-              </button>
-            </div>
-          </div>
-
-          {/* Results Display */}
-          {hasEvaluated && (
-            <div className="p-6 rounded-2xl bg-white border border-[#1A0F12]/10 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#991B1B] uppercase tracking-wider">
-                  {t.eligibilitySection.resultEligibleBadge}
-                </span>
-                <span className="px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
-                  {evaluatedSchemes.length} {t.eligibilitySection.resultEligibleCount}
-                </span>
-              </div>
-
-              {evaluatedSchemes.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {evaluatedSchemes.map((s) => (
-                    <div
-                      key={s.id}
-                      className="p-4 rounded-xl bg-[#FFFDF9] border border-[#DC2626]/20 flex flex-col justify-between space-y-2"
-                    >
-                      <div>
-                        <span className="text-[10px] font-mono text-[#991B1B] font-bold block mb-1">
-                          {s.badge[selectedLanguage]}
-                        </span>
-                        <h4 className="text-sm font-bold text-[#1A0F12] leading-tight">
-                          {s.title[selectedLanguage]}
-                        </h4>
-                      </div>
-                      <div className="flex items-center justify-between pt-2 text-[11px]">
-                        <span className="text-amber-800 font-semibold">{s.sla[selectedLanguage]}</span>
-                        <a
-                          href={s.portalUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-[#DC2626] font-bold hover:underline"
-                        >
-                          {t.schemesSection.visitPortalBtn} ↗
-                        </a>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-[#1A0F12]/70 font-light">
-                  {t.eligibilitySection.resultNone}
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* ---------------- INTERACTIVE SECTION 3: CITIZEN CHARTER SLA TRACKER ---------------- */}
-      <section id="tracker" className="w-full max-w-7xl mx-auto px-6 sm:px-12 py-12">
-        <div className="p-8 sm:p-12 rounded-3xl bg-white/70 backdrop-blur-xl border border-white/90 shadow-sm space-y-8">
-          <div className="space-y-1">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-[#DC2626] font-bold block">
-              {t.trackerSection.sectionBadge}
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1A0F12]">
-              {t.trackerSection.title}
-            </h2>
-            <p className="text-xs sm:text-sm text-[#1A0F12]/75 font-light">
-              {t.trackerSection.subtitle}
-            </p>
-          </div>
-
-          {/* Search Form */}
-          <form onSubmit={handleTrackSubmit} className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="text"
-              value={searchToken}
-              onChange={(e) => setSearchToken(e.target.value)}
-              placeholder={t.trackerSection.placeholder}
-              className="flex-1 px-4 py-3 rounded-2xl border border-[#1A0F12]/15 bg-white text-xs font-medium focus:outline-hidden focus:border-[#DC2626]"
-            />
-            <button
-              type="submit"
-              className="px-6 py-3 rounded-2xl bg-[#DC2626] hover:bg-[#991B1B] text-white text-xs font-bold transition-all shadow-sm cursor-pointer shrink-0"
-            >
-              {t.trackerSection.trackBtn}
-            </button>
-          </form>
-
-          {/* Quick Click Sample Tokens */}
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-[#1A0F12]/60 font-medium">
-              {t.trackerSection.quickSampleTokens}
-            </span>
-            {Object.keys(sampleTrackedRecords).map((tok) => (
-              <button
-                key={tok}
-                type="button"
-                onClick={() => {
-                  setSearchToken(tok);
-                  setCurrentTrackedApp(sampleTrackedRecords[tok]);
-                }}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
-                  searchToken === tok
-                    ? "bg-[#DC2626] text-white"
-                    : "bg-white border border-[#1A0F12]/15 text-[#1A0F12]/80 hover:border-[#DC2626]"
-                }`}
-              >
-                {tok}
-              </button>
-            ))}
-          </div>
-
-          {/* Active Tracked App Card */}
-          {currentTrackedApp && (
-            <div className="p-6 rounded-2xl bg-white border border-[#1A0F12]/10 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#1A0F12]/10">
-                <div>
-                  <span className="text-xs font-mono font-bold text-[#DC2626]">
-                    {currentTrackedApp.id}
-                  </span>
-                  <h3 className="text-base font-bold text-[#1A0F12]">
-                    {currentTrackedApp.scheme[selectedLanguage]}
-                  </h3>
-                  <span className="text-xs text-[#1A0F12]/70 font-light">
-                    Applicant: <strong className="font-semibold text-[#1A0F12]">{currentTrackedApp.applicant}</strong>
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-800 text-xs font-bold">
-                    {t.trackerSection.statusLabel}: {currentTrackedApp.status}
-                  </span>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-bold border ${
-                      currentTrackedApp.dbtStatus === "Linked"
-                        ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                        : "bg-amber-50 border-amber-200 text-amber-900"
-                    }`}
-                  >
-                    DBT: {currentTrackedApp.dbtStatus}
-                  </span>
-                </div>
-              </div>
-
-              {/* Statutory SLA Progress Bar */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-[#1A0F12]">
-                    {t.trackerSection.slaProgressLabel}
-                  </span>
-                  <span className="font-bold text-[#DC2626]">
-                    {currentTrackedApp.slaDaysRemaining} Days Remaining (Target: {currentTrackedApp.targetDate})
-                  </span>
-                </div>
-                <div className="w-full h-3 rounded-full bg-gray-100 overflow-hidden border border-[#1A0F12]/10">
-                  <div
-                    className="h-full bg-gradient-to-r from-emerald-500 via-amber-500 to-[#DC2626] rounded-full transition-all duration-500"
-                    style={{
-                      width: `${Math.round(
-                        ((currentTrackedApp.slaDaysTotal - currentTrackedApp.slaDaysRemaining) /
-                          currentTrackedApp.slaDaysTotal) *
-                          100
-                      )}%`,
-                    }}
-                  />
-                </div>
-                <div className="flex items-center justify-between text-[11px] text-[#1A0F12]/60 font-mono">
-                  <span>Day 1 (Intake)</span>
-                  <span className="text-[#991B1B] font-bold">
-                    {t.trackerSection.escalationReady}
-                  </span>
-                  <span>Day {currentTrackedApp.slaDaysTotal} (Statutory Limit)</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* ---------------- STATUTORY SLA GUARANTEE RIBBON ---------------- */}
-      <section className="w-full max-w-7xl mx-auto px-6 sm:px-12 py-6">
-        <div className="p-5 sm:p-6 rounded-3xl border border-white/90 bg-white/70 backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <span className="w-3 h-3 rounded-full bg-[#DC2626] animate-pulse shrink-0" />
-            <span className="text-xs sm:text-sm text-[#1A0F12]/85">
-              {t.slaRibbon.actTitle}{" "}
-              <strong className="text-[#1A0F12] font-extrabold">
-                {t.slaRibbon.slaGuarantee}
-              </strong>
-            </span>
-          </div>
-          <span className="text-[#991B1B] font-bold text-xs bg-[#991B1B]/10 px-3.5 py-1.5 rounded-full border border-[#991B1B]/20">
-            {t.slaRibbon.escalationNotice}
-          </span>
-        </div>
-      </section>
-
-      {/* ---------------- SECTION 6: CLOSING (WORDMARK & CREDITS) ---------------- */}
-      <Section6Closing />
-
-      {/* Replay trigger footer bar */}
-      <div className="w-full max-w-7xl mx-auto px-6 sm:px-12 py-6 flex items-center justify-between text-xs text-[#1A0F12]/60 border-t border-[#1A0F12]/10">
-        <span>BenefitBridge © 2026 • Government of India Digital Public Infrastructure Partner</span>
-        <button
-          type="button"
-          onClick={() => {
-            sessionStorage.removeItem("bb_intro_seen");
-            setIsIntroActive(true);
-          }}
-          className="text-[#DC2626] hover:text-[#991B1B] hover:underline font-bold cursor-pointer transition-colors"
-        >
-          {t.splash.replayBtn}
-        </button>
-      </div>
-
-      {/* ---------------- INTERACTIVE MODAL 1: VOICE ASSISTANCE ---------------- */}
-      {activeModal === "voice" && (
-        <div
-          className="fixed inset-0 z-50 bg-[#1A0F12]/60 backdrop-blur-xs flex items-center justify-center p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="voice-modal-title"
-        >
-          <div className="bg-[#FFFDF9] border border-[#DC2626]/30 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-[#DC2626]/10 text-[#DC2626] flex items-center justify-center text-2xl">
-                  🎙
-                </div>
-                <div>
-                  <h3 id="voice-modal-title" className="font-extrabold text-lg text-[#1A0F12]">
-                    {t.modals.voiceTitle}
-                  </h3>
-                  <p className="text-xs text-[#1A0F12]/60 font-light">
-                    {t.modals.voiceSubtitle}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setActiveModal("none")}
-                className="text-[#1A0F12]/40 hover:text-[#1A0F12] text-2xl font-bold cursor-pointer p-1"
-                aria-label="Close dialog"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-white border border-[#1A0F12]/10 space-y-4">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#991B1B]">
-                {voiceRecordingState === "recording" ? (
-                  <>
-                    <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping" />
-                    <span>{t.modals.voiceRecording}</span>
-                  </>
-                ) : voiceRecordingState === "success" ? (
-                  <>
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
-                    <span className="text-emerald-700">{t.modals.voiceSuccess}</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="w-2.5 h-2.5 rounded-full bg-gray-400" />
-                    <span className="text-[#1A0F12]/70">{t.modals.voiceIdle}</span>
-                  </>
-                )}
-              </div>
-
-              <p className="text-xs text-[#1A0F12]/80 leading-relaxed font-light">
-                {t.modals.voiceSamplePrompt}
-              </p>
-
-              <div className="pt-2 border-t border-[#1A0F12]/10 space-y-2 text-[11px] font-mono text-[#1A0F12]/75">
-                <div className="p-2.5 rounded-xl bg-[#FFFDF9] border border-[#1A0F12]/10">
-                  {t.modals.voiceSampleHindi}
-                </div>
-                <div className="p-2.5 rounded-xl bg-[#FFFDF9] border border-[#1A0F12]/10">
-                  {t.modals.voiceSampleEnglish}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              {voiceRecordingState === "idle" && (
-                <button
-                  type="button"
-                  onClick={() => setVoiceRecordingState("recording")}
-                  className="px-5 py-2.5 rounded-xl bg-[#DC2626] hover:bg-[#991B1B] text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
-                >
-                  {t.modals.voiceStartBtn}
-                </button>
-              )}
-              {voiceRecordingState === "recording" && (
-                <button
-                  type="button"
-                  onClick={() => setVoiceRecordingState("success")}
-                  className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-sm cursor-pointer animate-pulse"
-                >
-                  {t.modals.voiceStopBtn}
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setActiveModal("none")}
-                className="px-4 py-2.5 rounded-xl border border-[#1A0F12]/20 text-[#1A0F12]/80 text-xs font-semibold hover:bg-black/5 transition-colors cursor-pointer"
-              >
-                {t.modals.voiceClose}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ---------------- INTERACTIVE MODAL 2: DOCUMENT DOCTOR SCANNER ---------------- */}
-      {activeModal === "scanner" && (
-        <div
-          className="fixed inset-0 z-50 bg-[#1A0F12]/60 backdrop-blur-xs flex items-center justify-center p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="scanner-modal-title"
-        >
-          <div className="bg-[#FFFDF9] border border-[#1A0F12]/20 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-700 flex items-center justify-center text-2xl">
-                  🔍
-                </div>
-                <div>
-                  <h3 id="scanner-modal-title" className="font-extrabold text-lg text-[#1A0F12]">
-                    {t.modals.scannerTitle}
-                  </h3>
-                  <p className="text-xs text-[#1A0F12]/60 font-light">
-                    {t.modals.scannerSubtitle}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setActiveModal("none")}
-                className="text-[#1A0F12]/40 hover:text-[#1A0F12] text-2xl font-bold cursor-pointer p-1"
-                aria-label="Close dialog"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-white border border-[#1A0F12]/10 space-y-3">
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
-                  <span className="text-[10px] text-gray-500 font-mono block">
-                    {t.modals.scannerCard1Title}
-                  </span>
-                  <span className="font-bold text-[#1A0F12]">Sunita Devi</span>
-                </div>
-                <div className="p-3 rounded-xl bg-red-50 border border-red-200">
-                  <span className="text-[10px] text-red-500 font-mono block">
-                    {t.modals.scannerCard2Title}
-                  </span>
-                  <span className="font-bold text-[#DC2626]">Sunitha Devi</span>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold">
-                ⚠️ {t.modals.scannerDetectedMismatch}
-              </div>
-
-              <p className="text-xs text-[#1A0F12]/75 leading-relaxed font-light">
-                {t.modals.scannerAdvice}
-              </p>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setActiveModal("none")}
-                className="px-4 py-2.5 rounded-xl border border-[#1A0F12]/20 text-[#1A0F12]/80 text-xs font-semibold hover:bg-black/5 transition-colors cursor-pointer"
-              >
-                {t.modals.scannerClose}
-              </button>
               <a
-                href={getPortalUrl()}
-                target="_blank"
-                rel="noreferrer"
-                className="px-5 py-2.5 rounded-xl bg-[#DC2626] hover:bg-[#991B1B] text-white text-xs font-bold transition-all shadow-sm inline-flex items-center gap-1.5"
+                href="#interactive-tools"
+                onClick={() => setDocChecked(true)}
+                className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-white/90 hover:bg-[#FEE2E2]/60 text-[#991B1B] text-xs font-bold border border-[#FEE2E2] transition-all cursor-pointer shadow-sm active:scale-[0.98]"
               >
-                <span>{t.modals.scannerLaunchPortal}</span>
+                {t.card3Btn}
               </a>
             </div>
           </div>
-        </div>
-      )}
+
+          {/* ---------------- 3. INTERACTIVE ELIGIBILITY & DOCUMENT DOCTOR WORKBENCH ---------------- */}
+          <section
+            id="interactive-tools"
+            className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2"
+          >
+            {/* Tool A: Instant Statutory Eligibility Pre-Screen */}
+            <div className="p-7 rounded-3xl bg-white/70 backdrop-blur-xl border border-white/90 shadow-[0_12px_36px_rgba(0,0,0,0.03)] space-y-5">
+              <h3 className="text-lg font-extrabold text-[#991B1B]">
+                {t.eligibilityModalTitle}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#78716C] mb-1.5">
+                    {t.ageLabel}
+                  </label>
+                  <input
+                    type="number"
+                    value={ageInput}
+                    onChange={(e) => setAgeInput(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#E7D9CC] text-sm font-bold text-[#1C1917] focus:outline-none focus:border-[#DC2626]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#78716C] mb-1.5">
+                    {t.incomeLabel}
+                  </label>
+                  <input
+                    type="number"
+                    value={incomeInput}
+                    onChange={(e) => setIncomeInput(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#E7D9CC] text-sm font-bold text-[#1C1917] focus:outline-none focus:border-[#DC2626]"
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEligibilityChecked(true)}
+                className="px-5 py-2.5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+              >
+                {t.checkNowBtn}
+              </button>
+
+              {eligibilityChecked && (
+                <div
+                  className={`p-4 rounded-2xl text-xs font-bold leading-relaxed border ${
+                    isEligible
+                      ? "bg-[#F0FDF4] text-[#15803D] border-[#BBF7D0]"
+                      : "bg-[#FFFBEB] text-[#B45309] border-[#FDE68A]"
+                  }`}
+                >
+                  {isEligible ? t.eligibleMsg : t.notEligibleMsg}
+                </div>
+              )}
+            </div>
+
+            {/* Tool B: Document Doctor Phonetic Name Verifier */}
+            <div className="p-7 rounded-3xl bg-white/70 backdrop-blur-xl border border-white/90 shadow-[0_12px_36px_rgba(0,0,0,0.03)] space-y-5">
+              <h3 className="text-lg font-extrabold text-[#991B1B]">
+                {t.docModalTitle}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#78716C] mb-1.5">
+                    {t.docNameAadhaarLabel}
+                  </label>
+                  <input
+                    type="text"
+                    value={nameAadhaar}
+                    onChange={(e) => setNameAadhaar(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#E7D9CC] text-sm font-bold text-[#1C1917] focus:outline-none focus:border-[#DC2626]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#78716C] mb-1.5">
+                    {t.docNameBankLabel}
+                  </label>
+                  <input
+                    type="text"
+                    value={nameBank}
+                    onChange={(e) => setNameBank(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#E7D9CC] text-sm font-bold text-[#1C1917] focus:outline-none focus:border-[#DC2626]"
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDocChecked(true)}
+                className="px-5 py-2.5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+              >
+                {t.verifyMatchBtn}
+              </button>
+
+              {docChecked && (
+                <div
+                  className={`p-4 rounded-2xl text-xs font-bold leading-relaxed border ${
+                    isExactNameMatch
+                      ? "bg-[#F0FDF4] text-[#15803D] border-[#BBF7D0]"
+                      : "bg-[#FEF2F2] text-[#991B1B] border-[#FECACA]"
+                  }`}
+                >
+                  {isExactNameMatch ? t.matchSuccess : t.matchWarning}
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* ---------------- 4. REAL GOVERNMENT SCHEMES & PORTALS DIRECTORY ---------------- */}
+          <section id="schemes" className="space-y-6 pt-2">
+            <div className="space-y-2">
+              <h2 className="text-2xl md:text-3xl font-black text-[#1C1917]">
+                {t.schemesHeading}
+              </h2>
+              <p className="text-xs sm:text-sm text-[#78716C] font-medium">
+                {t.schemesSubheading}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {t.schemes.map((scheme) => (
+                <div
+                  key={scheme.id}
+                  className="p-6 rounded-3xl bg-white/70 backdrop-blur-xl border border-white/90 hover:border-[#DC2626]/40 shadow-[0_8px_30px_rgba(0,0,0,0.03)] flex flex-col justify-between space-y-5 transition-all"
+                >
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="px-3 py-1 rounded-full text-[11px] font-extrabold bg-[#FEE2E2] text-[#991B1B]">
+                        {scheme.level}
+                      </span>
+                      <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#F0FDF4] text-[#15803D] border border-[#BBF7D0]">
+                        {scheme.slaDays} {t.slaBadgeSuffix}
+                      </span>
+                    </div>
+
+                    <h3 className="text-lg font-extrabold text-[#1C1917]">
+                      {scheme.title}
+                    </h3>
+
+                    <div className="text-xs space-y-1.5 text-[#57534E]">
+                      <p>
+                        <strong className="text-[#1C1917]">{t.ministryLabel}:</strong>{" "}
+                        {scheme.ministry}
+                      </p>
+                      <p>
+                        <strong className="text-[#1C1917]">{t.eligibilityLabel}:</strong>{" "}
+                        {scheme.eligibilityText}
+                      </p>
+                      <p>
+                        <strong className="text-[#1C1917]">{t.benefitLabel}:</strong>{" "}
+                        <span className="text-[#15803D] font-bold">
+                          {scheme.benefitAmount}
+                        </span>
+                      </p>
+                      <p className="text-[11px] text-[#78716C] pt-1">
+                        {scheme.charterClause}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                    <a
+                      href={getDigiLockerUrl(scheme.id)}
+                      className="flex-1 text-center px-4 py-2.5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-bold transition-all shadow-sm"
+                    >
+                      {t.applyDigiLockerBtn}
+                    </a>
+                    <a
+                      href={scheme.portalUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-4 py-2.5 rounded-xl bg-white hover:bg-[#FEE2E2]/50 text-[#991B1B] border border-[#FEE2E2] text-xs font-bold transition-all"
+                    >
+                      {t.visitPortalBtn}
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Citizen Charter Status Guarantee Ribbon */}
+          <div className="p-5 rounded-2xl bg-white/70 backdrop-blur-xl border border-white/90 shadow-[0_8px_30px_rgb(0,0,0,0.03)] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-[#78716C]">
+            <div className="flex items-center gap-3">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#16A34A] animate-pulse" />
+              <span>
+                {t.slaPrefix}{" "}
+                <strong className="text-[#1C1917]">{t.slaStrong}</strong>
+              </span>
+            </div>
+            <span className="text-[#991B1B] font-extrabold tracking-wide">
+              {t.slaRight}
+            </span>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
