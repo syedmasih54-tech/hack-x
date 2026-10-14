@@ -15,10 +15,6 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
-  "optionalDependencies": {
-    "@rolldown/binding-linux-x64-gnu": "^1.2.13",
-    "@rolldown/binding-win32-x64-msvc": "^1.2.13"
-  },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
     "@types/node": "^22.0.0",
