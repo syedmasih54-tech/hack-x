@@ -1,6 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
+  "functions": {
+    "api/index.py": {
+      "includeFiles": "backend/**",
+      "maxDuration": 30
+    }
+  },
   "rewrites": [
     {
       "source": "/(schemes|eligibility|documents|applications|grievances|auth|health|voice|docs|openapi.json|redoc|portal)/:match*",
@@ -16,4 +22,3 @@
     }
   ]
 }
-

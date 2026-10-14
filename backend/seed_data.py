@@ -20,92 +20,96 @@ def generate_sample_document_images():
     Synthesizes realistic sample document images using Pillow.
     Ensures clear printed text so both pytesseract and fallback OCR easily parse them.
     """
-    SAMPLE_DOCS_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        SAMPLE_DOCS_DIR.mkdir(parents=True, exist_ok=True)
 
-    # 1. Ration Card with Name: Sunita Devi
-    ration_path = SAMPLE_DOCS_DIR / "ration_card_name_mismatch.jpg"
-    img_rc = Image.new("RGB", (800, 480), color=(248, 246, 240))
-    draw_rc = ImageDraw.Draw(img_rc)
+        # 1. Ration Card with Name: Sunita Devi
+        ration_path = SAMPLE_DOCS_DIR / "ration_card_name_mismatch.jpg"
+        img_rc = Image.new("RGB", (800, 480), color=(248, 246, 240))
+        draw_rc = ImageDraw.Draw(img_rc)
 
-    # Draw border
-    draw_rc.rectangle([10, 10, 790, 470], outline=(180, 140, 60), width=4)
-    draw_rc.rectangle([16, 16, 784, 80], fill=(225, 238, 225))
+        # Draw border
+        draw_rc.rectangle([10, 10, 790, 470], outline=(180, 140, 60), width=4)
+        draw_rc.rectangle([16, 16, 784, 80], fill=(225, 238, 225))
 
-    # Text
-    draw_rc.text((25, 25), "DEPARTMENT OF FOOD & CIVIL SUPPLIES (GOVT OF NCT DELHI)", fill=(20, 50, 20))
-    draw_rc.text((25, 50), "NATIONAL FOOD SECURITY ACT (NFSA) - PRIORITY RATION CARD", fill=(60, 90, 60))
+        # Text
+        draw_rc.text((25, 25), "DEPARTMENT OF FOOD & CIVIL SUPPLIES (GOVT OF NCT DELHI)", fill=(20, 50, 20))
+        draw_rc.text((25, 50), "NATIONAL FOOD SECURITY ACT (NFSA) - PRIORITY RATION CARD", fill=(60, 90, 60))
 
-    rc_lines = [
-        "Card Category: Below Poverty Line (BPL / PHH)",
-        "Ration Card No: 0710-4492-9102",
-        "Head of Family / Card Holder: Sunita Devi",
-        "Date of Birth: 12/04/1959",
-        "Gender: Female",
-        "Address: Ward 14, Shakurpur, North West Delhi - 110034",
-        "FPS Shop Licensee: Delhi Fair Price Shop #410",
-        "Issue Date: 14/06/2016"
-    ]
-    y = 105
-    for line in rc_lines:
-        draw_rc.text((35, y), line, fill=(30, 30, 30))
-        y += 42
+        rc_lines = [
+            "Card Category: Below Poverty Line (BPL / PHH)",
+            "Ration Card No: 0710-4492-9102",
+            "Head of Family / Card Holder: Sunita Devi",
+            "Date of Birth: 12/04/1959",
+            "Gender: Female",
+            "Address: Ward 14, Shakurpur, North West Delhi - 110034",
+            "FPS Shop Licensee: Delhi Fair Price Shop #410",
+            "Issue Date: 14/06/2016"
+        ]
+        y = 105
+        for line in rc_lines:
+            draw_rc.text((35, y), line, fill=(30, 30, 30))
+            y += 42
 
-    img_rc.save(ration_path, "JPEG", quality=92)
-    print(f"[Seed] Created sample document: {ration_path}")
+        img_rc.save(ration_path, "JPEG", quality=92)
+        print(f"[Seed] Created sample document: {ration_path}")
 
-    # 2. Bank Passbook with Name: Sunitha Devi (Intentional 'th' mismatch)
-    passbook_path = SAMPLE_DOCS_DIR / "bank_passbook.jpg"
-    img_bp = Image.new("RGB", (800, 480), color=(245, 248, 255))
-    draw_bp = ImageDraw.Draw(img_bp)
+        # 2. Bank Passbook with Name: Sunitha Devi (Intentional 'th' mismatch)
+        passbook_path = SAMPLE_DOCS_DIR / "bank_passbook.jpg"
+        img_bp = Image.new("RGB", (800, 480), color=(245, 248, 255))
+        draw_bp = ImageDraw.Draw(img_bp)
 
-    # Draw border
-    draw_bp.rectangle([10, 10, 790, 470], outline=(40, 70, 140), width=4)
-    draw_bp.rectangle([16, 16, 784, 80], fill=(215, 230, 250))
+        # Draw border
+        draw_bp.rectangle([10, 10, 790, 470], outline=(40, 70, 140), width=4)
+        draw_bp.rectangle([16, 16, 784, 80], fill=(215, 230, 250))
 
-    draw_bp.text((25, 25), "STATE BANK OF INDIA - SAVINGS BANK PASSBOOK", fill=(10, 30, 90))
-    draw_bp.text((25, 50), "PRADHAN MANTRI JAN DHAN YOJANA (PMJDY / DBT ENABLED)", fill=(40, 60, 110))
+        draw_bp.text((25, 25), "STATE BANK OF INDIA - SAVINGS BANK PASSBOOK", fill=(10, 30, 90))
+        draw_bp.text((25, 50), "PRADHAN MANTRI JAN DHAN YOJANA (PMJDY / DBT ENABLED)", fill=(40, 60, 110))
 
-    bp_lines = [
-        "Account Holder Name: Sunitha Devi",
-        "Account No: 30981240981",
-        "CIF Number: 84910294812",
-        "IFSC Code: SBIN0001234",
-        "Branch: Chandni Chowk Main Branch, Delhi - 110006",
-        "Date of Birth: 12/04/1959",
-        "Mode of Operation: Single",
-        "Account Status: Active (DBT Linked)"
-    ]
-    y = 105
-    for line in bp_lines:
-        draw_bp.text((35, y), line, fill=(20, 20, 20))
-        y += 42
+        bp_lines = [
+            "Account Holder Name: Sunitha Devi",
+            "Account No: 30981240981",
+            "CIF Number: 84910294812",
+            "IFSC Code: SBIN0001234",
+            "Branch: Chandni Chowk Main Branch, Delhi - 110006",
+            "Date of Birth: 12/04/1959",
+            "Mode of Operation: Single",
+            "Account Status: Active (DBT Linked)"
+        ]
+        y = 105
+        for line in bp_lines:
+            draw_bp.text((35, y), line, fill=(20, 20, 20))
+            y += 42
 
-    img_bp.save(passbook_path, "JPEG", quality=92)
-    print(f"[Seed] Created sample document: {passbook_path}")
+        img_bp.save(passbook_path, "JPEG", quality=92)
+        print(f"[Seed] Created sample document: {passbook_path}")
+    except Exception as e:
+        print(f"[Seed] Notice: Read-only or restricted filesystem ({e}). Using existing document samples.")
 
 
 def seed_database():
     """Initializes tables and seeds test schemes, citizens, applications, and documents."""
-    # Ensure any missing provenance columns in schemes table are added
-    with engine.connect() as conn:
-        cursor_res = conn.exec_driver_sql("PRAGMA table_info(schemes);").fetchall()
-        existing_cols = {row[1] for row in cursor_res}
-        cols_to_add = {
-            "ministry_or_department": "VARCHAR(255) DEFAULT 'Government Authority'",
-            "state_or_level": "VARCHAR(64) DEFAULT 'Central'",
-            "official_guidelines_url": "VARCHAR(512)",
-            "last_synced_at": "DATETIME",
-            "is_live_source": "BOOLEAN DEFAULT 1",
-            "official_source_name": "VARCHAR(255)",
-            "source_gazette_or_guideline_url": "VARCHAR(512)",
-            "citizen_charter_clause": "VARCHAR(255)",
-            "last_verified_date": "VARCHAR(32)",
-            "is_live_data_source": "BOOLEAN DEFAULT 1"
-        }
-        for col_name, col_type in cols_to_add.items():
-            if col_name not in existing_cols:
-                conn.exec_driver_sql(f"ALTER TABLE schemes ADD COLUMN {col_name} {col_type};")
-        conn.commit()
+    # Ensure any missing provenance columns in schemes table are added for SQLite
+    if engine.dialect.name == "sqlite":
+        with engine.connect() as conn:
+            cursor_res = conn.exec_driver_sql("PRAGMA table_info(schemes);").fetchall()
+            existing_cols = {row[1] for row in cursor_res}
+            cols_to_add = {
+                "ministry_or_department": "VARCHAR(255) DEFAULT 'Government Authority'",
+                "state_or_level": "VARCHAR(64) DEFAULT 'Central'",
+                "official_guidelines_url": "VARCHAR(512)",
+                "last_synced_at": "DATETIME",
+                "is_live_source": "BOOLEAN DEFAULT 1",
+                "official_source_name": "VARCHAR(255)",
+                "source_gazette_or_guideline_url": "VARCHAR(512)",
+                "citizen_charter_clause": "VARCHAR(255)",
+                "last_verified_date": "VARCHAR(32)",
+                "is_live_data_source": "BOOLEAN DEFAULT 1"
+            }
+            for col_name, col_type in cols_to_add.items():
+                if col_name not in existing_cols:
+                    conn.exec_driver_sql(f"ALTER TABLE schemes ADD COLUMN {col_name} {col_type};")
+            conn.commit()
 
     db = SessionLocal()
 
