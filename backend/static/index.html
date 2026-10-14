@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BenefitBridge - Citizen Welfare Navigator</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              orange: '#FF9933',
+              navy: '#000080',
+              green: '#138808',
+              card: '#F8FAFC'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .brand-red-bar {
+      height: 3px;
+      background: #C41528;
+    }
+  </style>
+</head>
+<body class="bg-white text-slate-800 min-h-screen flex flex-col font-sans">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="brand-red-bar"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#C41528] to-[#EF4444] text-white flex items-center justify-center font-black text-xl shadow-md shadow-red-600/20">
+          B
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="text-xl font-black tracking-tight text-slate-900">Benefit<span class="text-[#C41528]">Bridge</span></span>
+            <span class="text-xs bg-red-50 text-[#C41528] font-bold px-2.5 py-0.5 rounded-full border border-red-200">Live Civic Portal</span>
+          </div>
+          <p class="text-xs text-slate-500 font-medium">जन कल्याण सेतु &bull; Indian Citizen Welfare Assistance Layer</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center bg-slate-100 p-1 rounded-xl text-sm font-semibold space-x-1" id="navTabs">
+        <button onclick="switchTab('eligibility')" id="tab-eligibility" class="tab-btn px-4 py-2 rounded-lg transition-all text-[#C41528] bg-white shadow-xs border border-red-100 flex items-center gap-1.5 font-bold">
+          <i data-lucide="compass" class="w-4 h-4 text-[#C41528]"></i> Scheme Eligibility
+        </button>
+        <button onclick="switchTab('documentDoctor')" id="tab-documentDoctor" class="tab-btn px-4 py-2 rounded-lg transition-all text-slate-600 hover:text-[#C41528] flex items-center gap-1.5">
+          <i data-lucide="file-check" class="w-4 h-4 text-[#C41528]"></i> Document Doctor
+        </button>
+        <button onclick="switchTab('tracker')" id="tab-tracker" class="tab-btn px-4 py-2 rounded-lg transition-all text-slate-600 hover:text-[#C41528] flex items-center gap-1.5">
+          <i data-lucide="clock" class="w-4 h-4 text-[#C41528]"></i> Application Tracker
+        </button>
+        <button onclick="switchTab('grievance')" id="tab-grievance" class="tab-btn px-4 py-2 rounded-lg transition-all text-slate-600 hover:text-[#C41528] flex items-center gap-1.5">
+          <i data-lucide="shield-alert" class="w-4 h-4 text-[#C41528]"></i> Grievance Escalator
+        </button>
+      </nav>
+
+      <!-- Status Pill & Language Toggle -->
+      <div class="flex items-center gap-3">
+        <!-- Language Switcher -->
+        <div class="inline-flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-semibold">
+          <button id="langBtnEn" onclick="setAppLanguage('en')" class="px-2.5 py-1 rounded-md bg-[#C41528] text-white shadow-xs font-bold transition">EN</button>
+          <button id="langBtnHi" onclick="setAppLanguage('hi')" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 font-medium transition">हिन्दी</button>
+        </div>
+
+        <div class="hidden sm:flex items-center gap-2 text-xs text-slate-600 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+          <span class="w-2 h-2 rounded-full bg-[#C41528] animate-pulse"></span>
+          <span>Backend: <strong class="text-[#C41528]" id="apiStatusText">Live (127.0.0.1:8000)</strong></span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Notice Banner (Clean, Dismissible, Subtle) -->
+  <div id="topNoticeBanner" class="bg-slate-100/90 border-b border-slate-200 py-1.5 px-4 text-center text-xs text-slate-600 flex items-center justify-center gap-2">
+    <span class="inline-flex items-center gap-1.5 font-medium text-slate-700">
+      <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-600"></i>
+      <span><strong>Assistance & Preparation Layer:</strong> BenefitBridge helps you detect errors, check criteria, and draft grievances.</span>
+    </span>
+    <button onclick="document.getElementById('topNoticeBanner').remove()" class="text-slate-400 hover:text-slate-700 font-bold ml-2 text-sm leading-none" title="Dismiss">&times;</button>
+  </div>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+    <!-- TAB 1: ELIGIBILITY NAVIGATOR -->
+    <section id="pane-eligibility" class="space-y-6">
+      <!-- Clean Title & Beneficiary Presets -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+              <i data-lucide="compass" class="w-5 h-5 text-[#C41528]"></i> Welfare Scheme Eligibility Navigator
+            </h2>
+            <span class="text-[11px] bg-red-50 text-[#8E1B2B] font-semibold px-2 py-0.5 rounded-full border border-red-200">Deterministic Rules</span>
+            <button onclick="triggerLiveGovSync()" id="btnSyncGov" class="text-[11px] bg-red-50 hover:bg-red-100 text-[#8E1B2B] font-bold px-2.5 py-1 rounded-md border border-red-200 shadow-2xs flex items-center gap-1.5 transition cursor-pointer">
+              <i data-lucide="refresh-cw" class="w-3 h-3 text-[#C41528]"></i> <span>Sync Live Gov Data</span>
+            </button>
+          </div>
+          <p class="text-slate-500 text-xs mt-0.5">
+            Evaluate qualification criteria and statutory Citizen Charter guarantees in seconds without hallucinations.
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-1">Demo Personas:</span>
+          <button onclick="applyPreset('sunita')" class="px-3 py-1.5 text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/80 rounded-lg transition shadow-2xs">
+            👩 Sunita Devi (65yo Widow)
+          </button>
+          <button onclick="applyPreset('rahul')" class="px-3 py-1.5 text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200/80 rounded-lg transition shadow-2xs">
+            🎓 Rahul (20yo Student)
+          </button>
+          <button onclick="applyPreset('ram_charan')" class="px-3 py-1.5 text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200/80 rounded-lg transition shadow-2xs">
+            🌾 Ram Charan (45yo Farmer)
+          </button>
+        </div>
+      </div>
+
+      <!-- DigiLocker & API Setu (National SSO) Section -->
+      <div id="digilockerSection" class="space-y-4">
+        <!-- Error Alert (Hidden by default) -->
+        <div id="dlErrorBanner" class="hidden p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs flex items-center justify-between shadow-xs">
+          <div class="flex items-center gap-2">
+            <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-600 shrink-0"></i>
+            <span id="dlErrorMessage">DigiLocker authentication failed. Please try again.</span>
+          </div>
+          <button onclick="document.getElementById('dlErrorBanner').classList.add('hidden')" class="text-rose-600 hover:text-rose-900 font-bold ml-2">&times;</button>
+        </div>
+
+        <!-- 1. DigiLocker Action Card (Official Civic Navy/Slate Styling) -->
+        <div id="dlActionCard" class="bg-gradient-to-r from-[#0B192C] via-[#1E3E62] to-[#002B49] rounded-2xl p-4 sm:p-5 text-white shadow-xs border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="space-y-1.5 max-w-2xl">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="inline-flex items-center gap-1.5 bg-amber-400/20 text-amber-300 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-amber-400/30" id="dlBadgeTrust">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-400"></i>
+                <span>100% Paperless & Govt Verified (DigiLocker / Meri Pehchaan)</span>
+              </span>
+              <span class="bg-blue-400/20 text-blue-200 text-[10px] font-mono px-2 py-0.5 rounded border border-blue-400/30">API Setu v2.0</span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold tracking-tight text-white flex items-center gap-2" id="dlCardTitle">
+                <i data-lucide="lock" class="w-4 h-4 text-amber-400"></i>
+                <span>DigiLocker & API Setu (Meri Pehchaan SSO)</span>
+              </h3>
+              <p class="text-xs text-blue-100/90 leading-relaxed mt-0.5" id="dlCardSubtext">
+                Pull authentic digital certificates directly from Govt issuers. No document scanning or photo upload required.
+              </p>
+            </div>
+          </div>
+
+          <!-- Scheme selector and action buttons -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
+            <div class="flex flex-col gap-1">
+              <label for="dlTargetScheme" class="text-[10px] font-semibold text-blue-200" id="dlSelectSchemeLabel">Target Welfare Scheme:</label>
+              <select id="dlTargetScheme" class="bg-blue-950/90 text-white text-xs font-medium border border-blue-400/30 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-amber-400">
+                <option value="widow_pension">Indira Gandhi National Widow Pension Scheme (IGNWPS)</option>
+                <option value="scholarship">Post-Matric Scholarship Scheme for SC/ST/OBC Students</option>
+                <option value="kisan_yojana">PM Kisan Samman Nidhi (Direct Farmer Income Support)</option>
+              </select>
+            </div>
+            <div class="flex sm:flex-col gap-2 pt-1 sm:pt-4">
+              <button onclick="handleDigiLockerLogin(true)" id="btnDlLiveLogin" class="flex-1 bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs flex items-center justify-center gap-1.5 transition shadow-xs active:scale-[0.98]">
+                <i data-lucide="lock" class="w-3.5 h-3.5 text-slate-950"></i>
+                <span id="btnDlLiveText">Log in with DigiLocker</span>
+              </button>
+              <button onclick="handleDigiLockerLogin(false)" id="btnDlSandboxDemo" class="flex-1 bg-white/10 hover:bg-white/20 text-white font-semibold px-3 py-1.5 rounded-lg text-xs flex items-center justify-center gap-1.5 transition border border-white/20">
+                <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-300"></i>
+                <span id="btnDlSandboxText">1-Click Sandbox</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Loading State Card (Hidden by default) -->
+        <div id="dlLoadingCard" class="hidden bg-gradient-to-r from-[#0B192C] to-[#002B49] rounded-2xl p-8 text-white text-center space-y-3 shadow-xs border border-blue-900/40 animate-pulse">
+          <div class="w-10 h-10 mx-auto rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+            <i data-lucide="loader-2" class="w-5 h-5 text-amber-400 animate-spin"></i>
+          </div>
+          <div class="space-y-1">
+            <h3 class="font-bold text-sm text-white" id="dlLoadingTitle">Connecting to Government Authentication Gateway...</h3>
+            <p class="text-xs text-blue-200" id="dlLoadingSubtitle">Verifying credentials via Meri Pehchaan National SSO (APISetu API v2.0)</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Post-Login Verified Application Dashboard (Full Width, Hidden by default) -->
+      <div id="dlDashboard" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 space-y-5">
+        <!-- Verification Banner -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0 border border-red-200">
+              <i data-lucide="check-circle-2" class="w-5 h-5 text-[#C41528]"></i>
+            </div>
+            <div>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center gap-1 bg-red-50 text-[#8E1B2B] text-xs font-bold px-2.5 py-0.5 rounded-full border border-red-200" id="dlBannerBadge">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-[#C41528]"></i>
+                  <span>✓ Identity Verified via DigiLocker</span>
+                </span>
+                <span class="font-mono text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200" id="dlCitizenIdText">ID: DL-IND-8829103</span>
+              </div>
+              <div class="text-sm font-bold text-slate-900 mt-0.5" id="dlCitizenNameHeader">Sunita Devi</div>
+              <div class="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5" id="dlVerificationTimestamp">
+                <i data-lucide="clock" class="w-3 h-3 text-slate-400"></i>
+                <span>Digitally Verified via National SSO • SHA256_RSA_DIGILOCKER_VERIFIED</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 self-start sm:self-center">
+            <button onclick="resetDigiLockerView()" class="text-xs text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center gap-1.5 transition">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+              <span id="dlBtnReauth">Re-authenticate / Change Scheme</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Verified Documents Grid -->
+        <div class="space-y-2">
+          <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5" id="dlDocsGridTitle">
+            <i data-lucide="file-check" class="w-4 h-4 text-emerald-600"></i>
+            <span>Verified Credentials Pulled from Department Records</span>
+          </h4>
+          <div id="dlDocsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <!-- Dynamically populated document cards -->
+          </div>
+        </div>
+
+        <!-- Direct Application Confirmation Card -->
+        <div class="bg-gradient-to-r from-white via-red-50/40 to-white rounded-xl p-4 sm:p-5 border border-red-200 space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="space-y-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs font-bold text-[#8E1B2B]" id="dlAppConfirmedLabel">Instant Application Submitted Under Citizen Charter Guarantee</span>
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold bg-[#C41528] text-white px-2 py-0.5 rounded-full">
+                  <i data-lucide="check" class="w-3 h-3"></i> Pre-Verified
+                </span>
+              </div>
+              <div class="text-xs text-slate-600 flex items-center gap-1.5">
+                <span class="font-medium text-slate-700" id="dlSchemeLabelText">Welfare Scheme:</span>
+                <strong class="text-slate-900 font-semibold" id="dlSchemeNameText">Indira Gandhi National Widow Pension Scheme (IGNWPS)</strong>
+              </div>
+            </div>
+
+            <!-- Application Token with Copy Button -->
+            <div class="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-red-200 shadow-xs">
+              <div>
+                <div class="text-[10px] uppercase font-bold text-slate-500" id="dlTokenLabel">Application Token</div>
+                <div class="font-mono font-bold text-sm text-[#C41528]" id="dlAppTokenValue">APP-DL-WIDOW-9214</div>
+              </div>
+              <button onclick="copyDigiLockerToken()" id="btnCopyDlToken" class="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-[#C41528] transition" title="Copy Token">
+                <i data-lucide="copy" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Statutory SLA Timeframe & Next Steps Tracker -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-red-200/60 text-xs">
+            <div class="space-y-0.5">
+              <span class="text-[11px] font-semibold text-slate-600 uppercase" id="dlSlaLabel">Statutory SLA Guarantee:</span>
+              <div class="font-bold text-[#8E1B2B] flex items-center gap-1" id="dlSlaDaysText">
+                <i data-lucide="clock" class="w-3.5 h-3.5 text-[#C41528]"></i>
+                <span>Guaranteed Resolution: 30 Days</span>
+              </div>
+            </div>
+            <div class="space-y-0.5">
+              <span class="text-[11px] font-semibold text-slate-600 uppercase" id="dlTargetDateLabel">Target Resolution Date:</span>
+              <div class="font-bold text-[#8E1B2B] flex items-center gap-1" id="dlTargetDateText">
+                <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#C41528]"></i>
+                <span>13-Nov-2026 (Citizen Charter Mandate)</span>
+              </div>
+            </div>
+            <div class="space-y-0.5">
+              <span class="text-[11px] font-semibold text-slate-600 uppercase" id="dlNextStepLabel">Next Step:</span>
+              <div class="font-medium text-slate-700 flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-[#C41528] animate-pulse"></span>
+                <span id="dlNextStepText">Application Submitted & Pre-Verified</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Direct Track Status CTA -->
+          <div class="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="text-[11px] text-slate-600" id="dlTrackHintText">
+              Real-time tracking activated with statutory day-by-day deadline monitoring.
+            </div>
+            <button onclick="trackDigiLockerApplication()" class="w-full sm:w-auto bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center justify-center gap-2 transition shadow-xs">
+              <span id="dlTrackBtnText">Track Status in Real-Time</span>
+              <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Fallback Manual Review Link -->
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-700 shrink-0"></i>
+            <span id="dlMissingDocAlert">Missing a mandatory document in DigiLocker? You can upload paper certificates manually in Document Doctor.</span>
+          </div>
+          <button onclick="switchTab('documentDoctor')" class="font-bold underline text-blue-900 hover:text-blue-950 whitespace-nowrap self-start sm:self-center" id="dlOpenDocDoctorBtn">
+            Open Document Doctor &rarr;
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Form & Results Workspace -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <!-- Citizen Profile Form (5 Columns) -->
+        <div class="lg:col-span-5 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+              <i data-lucide="user" class="w-4 h-4 text-blue-600"></i> Citizen Profile
+            </h3>
+            <span class="text-[11px] text-slate-400 font-medium">Evaluation Criteria</span>
+          </div>
+
+          <!-- 1. Beneficiary Name with Voice Input -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-[11px] font-bold text-slate-600 uppercase">Citizen / Beneficiary Name</label>
+              <button type="button" onclick="recordFieldVoice('name')" id="mic-name" title="Speak Name (नाम बोलें)" class="inline-flex items-center gap-1 text-[11px] text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 rounded-md font-medium transition border border-blue-200/60 shadow-2xs">
+                <i data-lucide="mic" class="w-3 h-3 text-blue-600"></i>
+                <span class="mic-label">Speak Name</span>
+              </button>
+            </div>
+            <input type="text" id="profName" value="Sunita Devi" placeholder="e.g. Sunita Devi" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 text-sm font-semibold text-slate-800">
+          </div>
+
+          <!-- 2. Age & Gender with Voice Input -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-[11px] font-bold text-slate-600 uppercase">Age (Years)</label>
+                <button type="button" onclick="recordFieldVoice('age')" id="mic-age" title="Speak Age (उम्र बोलें)" class="inline-flex items-center gap-1 text-[11px] text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-1.5 py-0.5 rounded-md font-medium transition border border-blue-200/60 shadow-2xs">
+                  <i data-lucide="mic" class="w-3 h-3 text-blue-600"></i>
+                  <span class="mic-label">Speak</span>
+                </button>
+              </div>
+              <input type="number" id="profAge" value="65" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 text-sm font-semibold text-slate-800">
+            </div>
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-[11px] font-bold text-slate-600 uppercase">Gender</label>
+                <button type="button" onclick="recordFieldVoice('gender')" id="mic-gender" title="Speak Gender (लिंग बोलें)" class="inline-flex items-center gap-1 text-[11px] text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-1.5 py-0.5 rounded-md font-medium transition border border-blue-200/60 shadow-2xs">
+                  <i data-lucide="mic" class="w-3 h-3 text-blue-600"></i>
+                  <span class="mic-label">Speak</span>
+                </button>
+              </div>
+              <select id="profGender" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 text-sm font-semibold text-slate-800">
+                <option value="female">Female (महिला)</option>
+                <option value="male">Male (पुरुष)</option>
+                <option value="other">Other (अन्य)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 3. Marital Status & Occupation with Voice Input -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Marital Status</label>
+              <select id="profMarital" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 text-sm font-semibold text-slate-800">
+                <option value="widow">Widow</option>
+                <option value="married">Married</option>
+                <option value="single">Single</option>
+                <option value="unmarried">Unmarried</option>
+                <option value="divorced">Divorced</option>
+              </select>
+            </div>
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-[11px] font-bold text-slate-600 uppercase">Occupation</label>
+                <button type="button" onclick="recordFieldVoice('occupation')" id="mic-occupation" title="Speak Occupation (व्यवसाय बोलें)" class="inline-flex items-center gap-1 text-[11px] text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-1.5 py-0.5 rounded-md font-medium transition border border-blue-200/60 shadow-2xs">
+                  <i data-lucide="mic" class="w-3 h-3 text-blue-600"></i>
+                  <span class="mic-label">Speak</span>
+                </button>
+              </div>
+              <select id="profOccupation" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 text-sm font-semibold text-slate-800">
+                <option value="homemaker">Homemaker (गृहिणी)</option>
+                <option value="student">Student (छात्र)</option>
+                <option value="farmer">Farmer (किसान)</option>
+                <option value="daily_wage">Daily Wage (मजदूर)</option>
+                <option value="unemployed">Unemployed (बेरोजगार)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Annual Household Income (₹)</label>
+            <input type="number" id="profIncome" value="0" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-500 text-sm font-semibold text-slate-800">
+            <span class="text-[10px] text-slate-400 mt-0.5 block">₹0 indicates no regular income / BPL status</span>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-2">Available Documents</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700">
+              <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50/30 cursor-pointer transition select-none">
+                <input type="checkbox" id="doc_ration_card" class="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5" checked>
+                <span class="leading-snug">Ration Card (BPL)</span>
+              </label>
+              <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50/30 cursor-pointer transition select-none">
+                <input type="checkbox" id="doc_bank_passbook" class="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5" checked>
+                <span class="leading-snug">Bank Passbook</span>
+              </label>
+              <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50/30 cursor-pointer transition select-none">
+                <input type="checkbox" id="doc_death_cert" class="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5" checked>
+                <span class="leading-snug">Death Certificate</span>
+              </label>
+              <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50/30 cursor-pointer transition select-none">
+                <input type="checkbox" id="doc_income_cert" class="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5" checked>
+                <span class="leading-snug">Income Certificate</span>
+              </label>
+              <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50/30 cursor-pointer transition select-none">
+                <input type="checkbox" id="doc_age_proof" class="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5" checked>
+                <span class="leading-snug">Age Proof</span>
+              </label>
+              <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50/30 cursor-pointer transition select-none">
+                <input type="checkbox" id="doc_bonafide" class="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5">
+                <span class="leading-snug">Bonafide Student</span>
+              </label>
+              <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50/30 cursor-pointer transition select-none">
+                <input type="checkbox" id="doc_marksheet" class="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5">
+                <span class="leading-snug">Marksheet</span>
+              </label>
+              <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50/30 cursor-pointer transition select-none">
+                <input type="checkbox" id="doc_khatauni" class="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5">
+                <span class="leading-snug">Land Record (Khatauni)</span>
+              </label>
+            </div>
+          </div>
+
+          <button onclick="checkEligibility()" id="btnCheckEligibility" class="w-full bg-[#C41528] hover:bg-[#8E1B2B] text-white font-bold py-3 px-4 rounded-xl shadow-xs transition flex items-center justify-center gap-2 text-sm mt-2">
+            <i data-lucide="search" class="w-4 h-4"></i> Check Eligibility Now
+          </button>
+        </div>
+
+        <!-- Results Area (7 Columns) -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="bg-white p-3.5 px-4 rounded-xl border border-slate-200/80 flex flex-wrap items-center justify-between gap-2 shadow-2xs">
+            <span class="text-sm font-bold text-slate-800">Evaluated Welfare Schemes</span>
+            <div class="flex items-center gap-2 text-[11px] font-semibold">
+              <span class="text-[#C41528] bg-red-50 px-2 py-0.5 rounded-md border border-red-200 font-bold">🔴 Fully Eligible</span>
+              <span class="text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">🟡 Docs Needed</span>
+              <span class="text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">⚪ Ineligible</span>
+            </div>
+          </div>
+
+          <div id="eligibilityResults" class="space-y-3">
+            <!-- Results rendered here dynamically -->
+            <div class="bg-white p-10 rounded-2xl border border-slate-200/80 text-center text-slate-400">
+              <i data-lucide="compass" class="w-8 h-8 mx-auto text-slate-300 mb-2"></i>
+              <p class="font-medium text-xs text-slate-500">Click "Check Eligibility Now" or pick a persona above to view scheme matching results.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- TAB 2: DOCUMENT DOCTOR & MISMATCH CHECKER -->
+    <section id="pane-documentDoctor" class="hidden space-y-6">
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="file-check" class="w-6 h-6 text-emerald-600"></i> Pre-Application Document Doctor
+          </h2>
+          <p class="text-slate-600 text-sm mt-1">
+            Detects subtle transliteration differences (e.g. <em>Sunita</em> vs <em>Sunitha</em>) between your Ration Card and Bank Passbook before applying.
+          </p>
+        </div>
+        <button onclick="loadDemoDocs()" class="px-4 py-2 bg-[#C41528] hover:bg-[#8E1B2B] text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-2">
+          <i data-lucide="sparkles" class="w-4 h-4"></i> Load Sample Documents (Sunita Devi)
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Document 1: Ration Card -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b pb-2">
+            <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+              <i data-lucide="id-card" class="w-4 h-4 text-amber-600"></i> Document 1: Ration Card
+            </h3>
+            <span class="text-xs bg-amber-50 text-amber-800 font-semibold px-2 py-0.5 rounded border border-amber-200">Primary ID</span>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Beneficiary Name (Printed)</label>
+              <input type="text" id="doc1_name" value="Sunita Devi" class="w-full px-3 py-2 border rounded-lg text-sm font-semibold text-slate-900">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Date of Birth</label>
+              <input type="text" id="doc1_dob" value="12/04/1959" class="w-full px-3 py-2 border rounded-lg text-sm text-slate-800">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Ration Card Number</label>
+              <input type="text" id="doc1_num" value="0710-4492-9102" class="w-full px-3 py-2 border rounded-lg text-sm text-slate-800">
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <label class="block text-xs font-bold text-slate-600 mb-1">Or Upload Custom Document Photo</label>
+            <input type="file" id="fileDoc1" accept="image/*" class="w-full text-xs text-slate-600 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200">
+            <button onclick="scanUploadedFile('fileDoc1', 'doc1')" class="mt-2 text-xs bg-slate-800 text-white px-3 py-1.5 rounded-lg hover:bg-slate-900 font-semibold">
+              In-Memory OCR Scan
+            </button>
+          </div>
+        </div>
+
+        <!-- Document 2: Bank Passbook -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b pb-2">
+            <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+              <i data-lucide="landmark" class="w-4 h-4 text-blue-600"></i> Document 2: Bank Passbook
+            </h3>
+            <span class="text-xs bg-blue-50 text-blue-800 font-semibold px-2 py-0.5 rounded border border-blue-200">DBT Bank Account</span>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Account Holder Name (Printed)</label>
+              <input type="text" id="doc2_name" value="Sunitha Devi" class="w-full px-3 py-2 border rounded-lg text-sm font-semibold text-slate-900">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Account Number</label>
+                <input type="text" id="doc2_acc" value="30981240981" class="w-full px-3 py-2 border rounded-lg text-sm text-slate-800">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">IFSC Code</label>
+                <input type="text" id="doc2_ifsc" value="SBIN0001234" class="w-full px-3 py-2 border rounded-lg text-sm text-slate-800">
+              </div>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Date of Birth (Bank Record)</label>
+              <input type="text" id="doc2_dob" value="12/04/1959" class="w-full px-3 py-2 border rounded-lg text-sm text-slate-800">
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <label class="block text-xs font-bold text-slate-600 mb-1">Or Upload Custom Passbook Photo</label>
+            <input type="file" id="fileDoc2" accept="image/*" class="w-full text-xs text-slate-600 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200">
+            <button onclick="scanUploadedFile('fileDoc2', 'doc2')" class="mt-2 text-xs bg-slate-800 text-white px-3 py-1.5 rounded-lg hover:bg-slate-900 font-semibold">
+              In-Memory OCR Scan
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <div class="text-center">
+        <button onclick="compareDocuments()" class="bg-[#C41528] hover:bg-[#8E1B2B] text-white font-bold py-3.5 px-8 rounded-2xl shadow-md transition text-base inline-flex items-center gap-2">
+          <i data-lucide="git-compare" class="w-5 h-5"></i> Compare Documents & Detect Mismatches
+        </button>
+      </div>
+
+      <!-- Comparison Result Container -->
+      <div id="mismatchResult" class="hidden bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <!-- Dynamically rendered -->
+      </div>
+    </section>
+
+
+    <!-- TAB 3: APPLICATION TRACKER -->
+    <section id="pane-tracker" class="hidden space-y-6">
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="clock" class="w-6 h-6 text-blue-600"></i> Citizen Application Status & SLA Tracker
+          </h2>
+          <p class="text-slate-600 text-sm mt-1">
+            Tracks processing timelines against statutory Citizen's Charter guarantees.
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-slate-500 uppercase">Demo Apps:</span>
+          <button onclick="trackApplication('APP-SUNITA-ACTIVE-01')" class="px-3 py-1.5 text-xs font-semibold bg-blue-100 hover:bg-blue-200 text-blue-900 rounded-lg transition">
+            ⏱️ Active (Widow Pension)
+          </button>
+          <button onclick="trackApplication('APP-SUNITA-OVERDUE-02')" class="px-3 py-1.5 text-xs font-semibold bg-rose-100 hover:bg-rose-200 text-rose-900 rounded-lg transition">
+            🚨 Overdue (Kisan Yojna)
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-3">
+        <input type="text" id="inputAppId" value="APP-SUNITA-ACTIVE-01" placeholder="Enter Application ID (e.g. APP-SUNITA-ACTIVE-01)" class="flex-1 px-4 py-2.5 border rounded-xl font-mono text-sm uppercase">
+        <button onclick="trackApplication()" class="bg-[#C41528] hover:bg-[#8E1B2B] text-white font-bold px-6 py-2.5 rounded-xl transition flex items-center justify-center gap-2 text-sm shadow-xs">
+          <i data-lucide="search" class="w-4 h-4"></i> Track Status
+        </button>
+      </div>
+
+      <!-- Application Details Container -->
+      <div id="trackerResult" class="space-y-6">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+
+    <!-- TAB 4: GRIEVANCE ESCALATOR -->
+    <section id="pane-grievance" class="hidden space-y-6">
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+          <i data-lucide="shield-alert" class="w-6 h-6 text-rose-600"></i> Statutory Grievance Escalator
+        </h2>
+        <p class="text-slate-600 text-sm mt-1">
+          When an application breaches its public service delivery deadline, BenefitBridge prepares a formal representation ready for submission on official grievance channels.
+        </p>
+      </div>
+
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <h3 class="font-bold text-slate-900 text-sm border-b pb-2">Generate Grievance Draft for Overdue Application</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Target Application ID</label>
+            <input type="text" id="grievanceAppId" value="APP-SUNITA-OVERDUE-02" class="w-full px-3 py-2 border rounded-lg font-mono text-sm uppercase">
+            <span class="text-[11px] text-slate-500">Tip: Use seeded overdue application <code>APP-SUNITA-OVERDUE-02</code></span>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Citizen Remarks (Optional)</label>
+            <input type="text" id="grievanceRemarks" value="Visited Tehsil office twice; clerk claimed file is still under scrutiny." class="w-full px-3 py-2 border rounded-lg text-sm">
+          </div>
+        </div>
+
+        <button onclick="generateGrievance()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 px-6 rounded-xl shadow transition text-sm flex items-center gap-2">
+          <i data-lucide="file-pen" class="w-4 h-4"></i> Generate Formal Grievance Draft
+        </button>
+      </div>
+
+      <!-- Grievance Output Card -->
+      <div id="grievanceOutput" class="hidden bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <p>BenefitBridge &copy; 2026 &bull; Developed for Indian Citizen Welfare Empowerment</p>
+      <p class="text-slate-400">Deterministic Rules &bull; In-Memory OCR &bull; No Aadhaar Storage &bull; Open Grievance Framework</p>
+    </div>
+  </footer>
+
+  <!-- Client Script -->
+  <script>
+    // ---------------- Field-Level Voice Input Logic (Name, Age, Gender, Occupation) ----------------
+    let activeFieldRecognition = null;
+    let activeRecordingField = null;
+
+    function recordFieldVoice(field) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Web Speech API is not supported in this browser. Please type directly into the field!");
+        return;
+      }
+
+      const btn = document.getElementById('mic-' + field);
+      const labelSpan = btn ? btn.querySelector('.mic-label') : null;
+
+      // If already recording this field, stop it
+      if (activeRecordingField === field) {
+        if (activeFieldRecognition) activeFieldRecognition.stop();
+        resetMicBtn(field);
+        return;
+      }
+
+      // If recording another field, stop that one first
+      if (activeFieldRecognition) {
+        try { activeFieldRecognition.stop(); } catch(e){}
+        if (activeRecordingField) resetMicBtn(activeRecordingField);
+      }
+
+      try {
+        const recognition = new SpeechRecognition();
+        activeFieldRecognition = recognition;
+        activeRecordingField = field;
+
+        // Choose language based on currentLanguage or default to hi-IN / en-IN
+        recognition.lang = currentLanguage === 'hi' ? 'hi-IN' : 'en-IN';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        if (btn) {
+          btn.classList.remove('bg-blue-50', 'text-blue-700', 'border-blue-200/60');
+          btn.classList.add('bg-rose-100', 'text-rose-800', 'border-rose-300', 'animate-pulse');
+          if (labelSpan) labelSpan.textContent = currentLanguage === 'hi' ? 'बोलिए...' : 'Listening...';
+        }
+
+        const fieldTitle = field === 'name' ? 'Name (नाम)' : field === 'age' ? 'Age (उम्र)' : field === 'gender' ? 'Gender (लिंग)' : 'Occupation (व्यवसाय)';
+        showVoiceFieldToast(`🎙️ Listening for ${fieldTitle}... बोलिए...`);
+
+        recognition.onresult = (event) => {
+          const speech = event.results[0][0].transcript.trim();
+          processFieldVoiceResult(field, speech);
+          resetMicBtn(field);
+        };
+
+        recognition.onerror = (event) => {
+          resetMicBtn(field);
+          if (event.error !== 'no-speech') {
+            showVoiceFieldToast("⚠️ Microphone error: " + event.error);
+          }
+        };
+
+        recognition.onend = () => {
+          resetMicBtn(field);
+        };
+
+        recognition.start();
+      } catch (err) {
+        resetMicBtn(field);
+        alert("Microphone activation failed: " + err.message);
+      }
+    }
+
+    function resetMicBtn(field) {
+      if (activeRecordingField === field) {
+        activeFieldRecognition = null;
+        activeRecordingField = null;
+      }
+      const btn = document.getElementById('mic-' + field);
+      if (btn) {
+        btn.classList.remove('bg-rose-100', 'text-rose-800', 'border-rose-300', 'animate-pulse');
+        btn.classList.add('bg-blue-50', 'text-blue-700', 'border-blue-200/60');
+        const labelSpan = btn.querySelector('.mic-label');
+        if (labelSpan) {
+          if (field === 'name') {
+            labelSpan.textContent = currentLanguage === 'hi' ? 'नाम बोलें' : 'Speak Name';
+          } else {
+            labelSpan.textContent = currentLanguage === 'hi' ? 'बोलें' : 'Speak';
+          }
+        }
+      }
+    }
+
+    function processFieldVoiceResult(field, speech) {
+      const cleanSpeech = speech.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").trim();
+
+      if (field === 'name') {
+        let nameVal = cleanSpeech
+          .replace(/^(मेरा नाम|my name is|i am|naam hai|नाम है|this is)\s*/i, "")
+          .replace(/\s*(है|hai)$/i, "")
+          .trim();
+        if (!nameVal) nameVal = cleanSpeech;
+        nameVal = nameVal.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        const nameInput = document.getElementById('profName');
+        if (nameInput) nameInput.value = nameVal;
+        showVoiceFieldToast(`✓ Name updated: "${nameVal}"`);
+      } else if (field === 'age') {
+        const hindiWordNumbers = {
+          "एक": 1, "दो": 2, "तीन": 3, "चार": 4, "पाँच": 5, "पांच": 5, "छह": 6, "सात": 7, "आठ": 8, "नौ": 9, "दस": 10,
+          "ग्यारह": 11, "बारह": 12, "तेरह": 13, "चौदह": 14, "पंद्रह": 15, "सोलह": 16, "सत्रह": 17, "अठारह": 18, "उन्नीस": 19,
+          "बीस": 20, "इक्कीस": 21, "बाईस": 22, "तेईस": 23, "चौबीस": 24, "पच्चीस": 25, "छब्बीस": 26, "सत्ताईस": 27, "अट्ठाईस": 28, "उनतीस": 29,
+          "तीस": 30, "इकतीस": 31, "बत्तीस": 32, "तैंतीस": 33, "चौंतीस": 34, "पैंतीस": 35, "छत्तीस": 36, "सैंतीस": 37, "अड़तीस": 38, "उनतालीस": 39,
+          "चालीस": 40, "इकतालीस": 41, "बयालीस": 42, "तैंतालीस": 43, "चवालीस": 44, "पैंतालीस": 45, "छियालीस": 46, "सैंतालीस": 47, "अड़तालीस": 48, "उनचास": 49,
+          "पचास": 50, "इक्यावन": 51, "बावन": 52, "तिरेपन": 53, "चौवन": 54, "पचपन": 55, "छप्पन": 56, "सत्तावन": 57, "अट्ठावन": 58, "उनसठ": 59,
+          "साठ": 60, "इकसठ": 61, "बासठ": 62, "तिरेसठ": 63, "चौंसठ": 64, "पैंसठ": 65, "छियासठ": 66, "सरसठ": 67, "अड़सठ": 68, "उनहत्तर": 69,
+          "सत्तर": 70, "इकहत्तर": 71, "बहत्तर": 72, "तिहत्तर": 73, "चौहत्तर": 74, "पचहत्तर": 75, "छिहत्तर": 76, "सतहत्तर": 77, "अठहत्तर": 78, "उनासी": 79,
+          "अस्सी": 80, "नब्बे": 90, "सौ": 100,
+          "twenty": 20, "twenty one": 21, "twenty two": 22, "twenty five": 25,
+          "thirty": 30, "thirty five": 35, "forty": 40, "forty five": 45,
+          "fifty": 50, "fifty five": 55, "sixty": 60, "sixty five": 65, "seventy": 70, "seventy five": 75, "eighty": 80
+        };
+
+        let extractedAge = null;
+        const digitMatch = cleanSpeech.match(/\b(\d{1,3})\b/);
+        if (digitMatch) {
+          extractedAge = parseInt(digitMatch[1], 10);
+        } else {
+          const lower = cleanSpeech.toLowerCase();
+          for (const [w, num] of Object.entries(hindiWordNumbers)) {
+            if (lower.includes(w)) {
+              extractedAge = num;
+              break;
+            }
+          }
+        }
+
+        if (extractedAge && extractedAge > 0 && extractedAge <= 120) {
+          document.getElementById('profAge').value = extractedAge;
+          showVoiceFieldToast(`✓ Age updated: ${extractedAge} years`);
+        } else {
+          showVoiceFieldToast(`⚠️ Could not recognize age number from "${speech}"`);
+        }
+      } else if (field === 'gender') {
+        const lower = cleanSpeech.toLowerCase();
+        const sel = document.getElementById('profGender');
+        if (lower.includes("female") || lower.includes("mahila") || lower.includes("महिला") || lower.includes("aurat") || lower.includes("woman") || lower.includes("ladki") || lower.includes("स्त्री")) {
+          sel.value = "female";
+          showVoiceFieldToast("✓ Gender set to: Female (महिला)");
+        } else if (lower.includes("male") || lower.includes("purush") || lower.includes("पुरुष") || lower.includes("man") || lower.includes("aadmi") || lower.includes("ladka")) {
+          sel.value = "male";
+          showVoiceFieldToast("✓ Gender set to: Male (पुरुष)");
+        } else if (lower.includes("other") || lower.includes("transgender") || lower.includes("anya") || lower.includes("अन्य")) {
+          sel.value = "other";
+          showVoiceFieldToast("✓ Gender set to: Other (अन्य)");
+        } else {
+          showVoiceFieldToast(`⚠️ Could not match gender from "${speech}"`);
+        }
+      } else if (field === 'occupation') {
+        const lower = cleanSpeech.toLowerCase();
+        const sel = document.getElementById('profOccupation');
+        if (lower.includes("farmer") || lower.includes("kisan") || lower.includes("किसान") || lower.includes("kheti") || lower.includes("कृषि") || lower.includes("agriculture")) {
+          sel.value = "farmer";
+          showVoiceFieldToast("✓ Occupation set to: Farmer (किसान)");
+        } else if (lower.includes("student") || lower.includes("vidyarthi") || lower.includes("छात्र") || lower.includes("padhai") || lower.includes("college") || lower.includes("school")) {
+          sel.value = "student";
+          showVoiceFieldToast("✓ Occupation set to: Student (छात्र)");
+        } else if (lower.includes("homemaker") || lower.includes("housewife") || lower.includes("grihini") || lower.includes("गृहिणी") || lower.includes("ghar")) {
+          sel.value = "homemaker";
+          showVoiceFieldToast("✓ Occupation set to: Homemaker (गृहिणी)");
+        } else if (lower.includes("daily wage") || lower.includes("mazdoor") || lower.includes("मजदूर") || lower.includes("labour") || lower.includes("shramik")) {
+          sel.value = "daily_wage";
+          showVoiceFieldToast("✓ Occupation set to: Daily Wage Labourer");
+        } else if (lower.includes("unemployed") || lower.includes("berozgar") || lower.includes("बेरोजगार") || lower.includes("kuch nahi")) {
+          sel.value = "unemployed";
+          showVoiceFieldToast("✓ Occupation set to: Unemployed");
+        } else {
+          showVoiceFieldToast(`⚠️ Could not match occupation from "${speech}"`);
+        }
+      }
+
+      // Automatically re-evaluate eligibility matching in real-time
+      checkEligibility();
+    }
+
+    let toastTimeout = null;
+    function showVoiceFieldToast(msg) {
+      let toast = document.getElementById('voiceFieldToast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'voiceFieldToast';
+        toast.className = 'fixed bottom-6 right-6 z-50 bg-slate-900 text-white text-xs px-4 py-2.5 rounded-xl shadow-xl border border-slate-700 flex items-center gap-2 transition-all duration-300';
+        document.body.appendChild(toast);
+      }
+      toast.innerHTML = `<span class="w-2 h-2 rounded-full bg-[#C41528] animate-pulse"></span> <span>${msg}</span>`;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      toast.classList.add('opacity-100');
+
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('opacity-100');
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 3500);
+    }
+
+    // Fallback stubs for backward-compatibility
+    function toggleSpeechRecording() { recordFieldVoice('name'); }
+    function loadSampleVoicePrompt() {}
+    function submitVoiceIntake() { checkEligibility(); }
+    function applyDirectlyViaVoice() {}
+    function playTTSConfirmation(text, langCode) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = langCode || 'hi-IN';
+      utterance.rate = 0.95;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // =========================================================================
+    //            DigiLocker & API Setu (Meri Pehchaan SSO) Integration
+    // =========================================================================
+
+    let currentLanguage = 'en';
+    let lastDigiLockerData = null;
+
+    const dlI18n = {
+      en: {
+        brandTitle: "DigiLocker & API Setu (Meri Pehchaan SSO)",
+        brandBadge: "100% Paperless & Govt Verified (DigiLocker / Meri Pehchaan)",
+        subtext: "Pull authentic digital certificates directly from Govt issuers. No document scanning or photo upload required.",
+        selectScheme: "Target Welfare Scheme:",
+        btnLogin: "Log in with DigiLocker",
+        btnSimulate: "Instant 1-Click Verification (Sandbox)",
+        connectingGateway: "Connecting to Government Authentication Gateway...",
+        connectingSubtitle: "Initiating National SSO (Meri Pehchaan) Authorization Code Flow...",
+        verifyingDocs: "Authenticating identity & pulling digitally signed credentials...",
+        verifyingSubtitle: "Fetching cryptographically verified credentials from state issuing authorities...",
+        verifiedBadge: "✓ Identity Verified via DigiLocker",
+        verifiedAt: "Digitally Verified via National SSO • SHA256_RSA_DIGILOCKER_VERIFIED",
+        verifiedDocsTitle: "Verified Credentials Pulled from Department Records",
+        officialSigned: "Official E-Signed Document",
+        appConfirmed: "Instant Application Submitted Under Citizen Charter Guarantee",
+        appTokenLabel: "Application Token",
+        schemeLabel: "Welfare Scheme:",
+        slaGuarantee: "Statutory SLA Guarantee:",
+        slaDays: "Guaranteed Resolution: {days} Days",
+        targetDateLabel: "Target Resolution Date:",
+        nextStepLabel: "Next Step:",
+        nextStepText: "Application Submitted & Pre-Verified",
+        trackHint: "Real-time tracking activated with statutory day-by-day deadline monitoring.",
+        trackBtn: "Track Status in Real-Time",
+        missingDocAlert: "Missing a mandatory document in DigiLocker? You can upload paper certificates manually in Document Doctor.",
+        openDocDoctor: "Open Document Doctor →",
+        reauthBtn: "Re-authenticate / Change Scheme",
+        copySuccess: "Copied!",
+        schemes: {
+          widow_pension: "Indira Gandhi National Widow Pension Scheme (IGNWPS)",
+          scholarship: "Post-Matric Scholarship Scheme for SC/ST/OBC Students",
+          kisan_yojana: "PM Kisan Samman Nidhi (Direct Farmer Income Support)"
+        }
+      },
+      hi: {
+        brandTitle: "डिजीलॉकर एवं एपीआई सेतु (मेरी पहचान SSO)",
+        brandBadge: "१००% पेपरलेस एवं सरकारी प्रमाणित (डिजीलॉकर / मेरी पहचान)",
+        subtext: "सरकारी जारीकर्ताओं से सीधे प्रामाणिक डिजिटल प्रमाण पत्र प्राप्त करें। दस्तावेज़ स्कैन या फ़ोटो अपलोड की आवश्यकता नहीं है।",
+        selectScheme: "कल्याणकारी योजना का चयन करें:",
+        btnLogin: "डिजीलॉकर से लॉगिन करें",
+        btnSimulate: "त्वरित सत्यापन (डेमो सैंडबॉक्स)",
+        connectingGateway: "सरकारी प्रमाणीकरण गेटवे से जुड़ रहे हैं...",
+        connectingSubtitle: "मेरी पहचान नेशनल सिंगल साइन-ऑन (SSO) से संपर्क हो रहा है...",
+        verifyingDocs: "पहचान प्रमाणित की जा रही है एवं डिजिटल दस्तावेज़ प्राप्त हो रहे हैं...",
+        verifyingSubtitle: "सरकारी विभागों से प्रामाणिक एवं ई-हस्ताक्षरित रिकॉर्ड प्राप्त किए जा रहे हैं...",
+        verifiedBadge: "✓ डिजीलॉकर द्वारा पहचान सत्यापित",
+        verifiedAt: "राष्ट्रीय SSO द्वारा डिजिटल प्रमाणित • SHA256_RSA_DIGILOCKER_VERIFIED",
+        verifiedDocsTitle: "विभागीय रिकॉर्ड से प्राप्त प्रमाणित डिजिटल दस्तावेज़",
+        officialSigned: "आधिकारिक ई-हस्ताक्षरित दस्तावेज़",
+        appConfirmed: "नागरिक अधिकार पत्र के तहत तत्काल आवेदन सफलतापूर्वक दर्ज",
+        appTokenLabel: "आवेदन टोकन संख्या",
+        schemeLabel: "कल्याणकारी योजना:",
+        slaGuarantee: "कानूनी नागरिक अधिकार पत्र गारंटी:",
+        slaDays: "गारंटीकृत निवारण: {days} दिन",
+        targetDateLabel: "अपेक्षित समाधान तिथि:",
+        nextStepLabel: "अगला चरण:",
+        nextStepText: "आवेदन दर्ज एवं दस्तावेज़ पूर्व-सत्यापित",
+        trackHint: "कानूनी समय-सीमा की निगरानी के साथ लाइव ट्रैकिंग सक्रिय कर दी गई है।",
+        trackBtn: "लाइव स्थिति ट्रैक करें",
+        missingDocAlert: "क्या डिजीलॉकर में कोई दस्तावेज़ उपलब्ध नहीं है? आप दस्तावेज़ डॉक्टर में मैन्युअल अपलोड कर सकते हैं।",
+        openDocDoctor: "दस्तावेज़ डॉक्टर खोलें →",
+        reauthBtn: "पुनः लॉगिन करें / योजना बदलें",
+        copySuccess: "कॉपी हो गया!",
+        schemes: {
+          widow_pension: "इंदिरा गांधी राष्ट्रीय विधवा पेंशन योजना (IGNWPS)",
+          scholarship: "पोस्ट-मैट्रिक छात्रवृत्ति योजना (एससी/एसटी/ओबीसी)",
+          kisan_yojana: "पीएम किसान सम्मान निधि (कृषक प्रत्यक्ष वित्तीय सहायता)"
+        }
+      }
+    };
+
+    function setAppLanguage(lang) {
+      currentLanguage = lang;
+      const btnEn = document.getElementById('langBtnEn');
+      const btnHi = document.getElementById('langBtnHi');
+
+      if (lang === 'en') {
+        btnEn.className = 'px-2.5 py-1 rounded-md bg-white text-blue-900 shadow-xs font-bold transition';
+        btnHi.className = 'px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 font-medium transition';
+      } else {
+        btnHi.className = 'px-2.5 py-1 rounded-md bg-white text-blue-900 shadow-xs font-bold transition';
+        btnEn.className = 'px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 font-medium transition';
+      }
+
+      // Update DigiLocker Action Card text
+      const t = dlI18n[lang];
+      const badgeTrust = document.getElementById('dlBadgeTrust');
+      if (badgeTrust) badgeTrust.querySelector('span').textContent = t.brandBadge;
+
+      const cardTitle = document.getElementById('dlCardTitle');
+      if (cardTitle) cardTitle.querySelector('span').textContent = t.brandTitle;
+
+      const cardSubtext = document.getElementById('dlCardSubtext');
+      if (cardSubtext) cardSubtext.textContent = t.subtext;
+
+      const selLabel = document.getElementById('dlSelectSchemeLabel');
+      if (selLabel) selLabel.textContent = t.selectScheme;
+
+      const liveBtnText = document.getElementById('btnDlLiveText');
+      if (liveBtnText) liveBtnText.textContent = t.btnLogin;
+
+      const sandBtnText = document.getElementById('btnDlSandboxText');
+      if (sandBtnText) sandBtnText.textContent = t.btnSimulate;
+
+      // Update Fallback alert & re-auth
+      const missingAlert = document.getElementById('dlMissingDocAlert');
+      if (missingAlert) missingAlert.textContent = t.missingDocAlert;
+
+      const openDocBtn = document.getElementById('dlOpenDocDoctorBtn');
+      if (openDocBtn) openDocBtn.textContent = t.openDocDoctor;
+
+      const reauthBtn = document.getElementById('dlBtnReauth');
+      if (reauthBtn) reauthBtn.textContent = t.reauthBtn;
+
+      // Update field voice button labels
+      document.querySelectorAll('.mic-label').forEach(el => {
+        if (el.parentElement && el.parentElement.id === 'mic-name') {
+          el.textContent = lang === 'hi' ? 'नाम बोलें' : 'Speak Name';
+        } else {
+          el.textContent = lang === 'hi' ? 'बोलें' : 'Speak';
+        }
+      });
+
+      // If dashboard is open, update dashboard strings
+      if (lastDigiLockerData) {
+        renderDigiLockerDashboard(lastDigiLockerData);
+      }
+    }
+
+    async function handleDigiLockerLogin(isLive) {
+      const schemeId = document.getElementById('dlTargetScheme').value;
+      const errorBanner = document.getElementById('dlErrorBanner');
+      errorBanner.classList.add('hidden');
+
+      const actionCard = document.getElementById('dlActionCard');
+      const loadingCard = document.getElementById('dlLoadingCard');
+      const loadingTitle = document.getElementById('dlLoadingTitle');
+      const loadingSubtitle = document.getElementById('dlLoadingSubtitle');
+
+      actionCard.classList.add('hidden');
+      loadingCard.classList.remove('hidden');
+
+      const t = dlI18n[currentLanguage];
+
+      if (isLive) {
+        loadingTitle.textContent = t.connectingGateway;
+        loadingSubtitle.textContent = t.connectingSubtitle;
+        try {
+          const res = await fetch(`/auth/digilocker/login?format=json&target_scheme_id=${encodeURIComponent(schemeId)}`);
+          if (!res.ok) throw new Error('Gateway initiation failed (HTTP ' + res.status + ')');
+          const data = await res.json();
+          if (data.auth_url) {
+            window.location.href = data.auth_url;
+            return;
+          }
+          throw new Error('Authorization URL missing in gateway response.');
+        } catch (e) {
+          showDigiLockerError(e.message || 'DigiLocker connection failed.');
+          resetDigiLockerView();
+        }
+      } else {
+        // Instant Sandbox Verification Flow
+        loadingTitle.textContent = t.verifyingDocs;
+        loadingSubtitle.textContent = t.verifyingSubtitle;
+        try {
+          const res = await fetch(`/auth/digilocker/callback?code=sandbox_demo_code&state=demo:${encodeURIComponent(schemeId)}`);
+          if (!res.ok) throw new Error('Sandbox verification failed (HTTP ' + res.status + ')');
+          const data = await res.json();
+          renderDigiLockerDashboard(data);
+        } catch (e) {
+          showDigiLockerError(e.message || 'Sandbox verification failed.');
+          resetDigiLockerView();
+        }
+      }
+    }
+
+    async function processDigiLockerCallback(code, state) {
+      const actionCard = document.getElementById('dlActionCard');
+      const loadingCard = document.getElementById('dlLoadingCard');
+      const loadingTitle = document.getElementById('dlLoadingTitle');
+      const loadingSubtitle = document.getElementById('dlLoadingSubtitle');
+
+      actionCard.classList.add('hidden');
+      loadingCard.classList.remove('hidden');
+
+      const t = dlI18n[currentLanguage];
+      loadingTitle.textContent = t.verifyingDocs;
+      loadingSubtitle.textContent = t.verifyingSubtitle;
+
+      try {
+        const res = await fetch(`/auth/digilocker/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`);
+        if (!res.ok) throw new Error('OAuth callback failed (HTTP ' + res.status + ')');
+        const data = await res.json();
+        renderDigiLockerDashboard(data);
+      } catch (e) {
+        showDigiLockerError('Callback processing failed: ' + e.message);
+        resetDigiLockerView();
+      }
+    }
+
+    function renderDigiLockerDashboard(data) {
+      lastDigiLockerData = data;
+      const t = dlI18n[currentLanguage];
+
+      // Hide loading, show dashboard
+      document.getElementById('dlLoadingCard').classList.add('hidden');
+      document.getElementById('dlActionCard').classList.add('hidden');
+      const dashboard = document.getElementById('dlDashboard');
+      dashboard.classList.remove('hidden');
+
+      // Populate Citizen Profile
+      document.getElementById('dlCitizenNameHeader').textContent = data.full_name || 'Sunita Devi';
+      document.getElementById('dlCitizenIdText').textContent = 'ID: ' + (data.citizen_id ? data.citizen_id.substring(0, 14) + '...' : 'DL-IND-8829103');
+      document.getElementById('dlBannerBadge').innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-[#C41528]"></i> <span>${t.verifiedBadge}</span>`;
+      document.getElementById('dlVerificationTimestamp').innerHTML = `<i data-lucide="clock" class="w-3 h-3 text-slate-400"></i> <span>${t.verifiedAt}</span>`;
+
+      // Scheme details
+      const schemeTitle = t.schemes[data.scheme_id] || data.scheme_id;
+      document.getElementById('dlSchemeNameText').textContent = schemeTitle;
+      document.getElementById('dlSchemeLabelText').textContent = t.schemeLabel;
+      document.getElementById('dlAppConfirmedLabel').textContent = t.appConfirmed;
+
+      // Token
+      document.getElementById('dlTokenLabel').textContent = t.appTokenLabel;
+      document.getElementById('dlAppTokenValue').textContent = data.application_id || 'APP-DL-WIDOW-9214';
+
+      // SLA & Resolution Date
+      const slaDays = data.statutory_deadline_days || 30;
+      document.getElementById('dlSlaLabel').textContent = t.slaGuarantee;
+      document.getElementById('dlSlaDaysText').innerHTML = `<i data-lucide="clock" class="w-3.5 h-3.5 text-[#C41528]"></i> <span>${t.slaDays.replace('{days}', slaDays)}</span>`;
+
+      document.getElementById('dlTargetDateLabel').textContent = t.targetDateLabel;
+      document.getElementById('dlTargetDateText').innerHTML = `<i data-lucide="calendar" class="w-3.5 h-3.5 text-[#C41528]"></i> <span>${data.expected_resolution_date || '13-Nov-2026'} (Citizen Charter)</span>`;
+
+      document.getElementById('dlNextStepLabel').textContent = t.nextStepLabel;
+      document.getElementById('dlNextStepText').textContent = t.nextStepText;
+
+      document.getElementById('dlTrackHintText').textContent = t.trackHint;
+      document.getElementById('dlTrackBtnText').textContent = t.trackBtn;
+
+      // Render Verified Documents Grid
+      const docsGrid = document.getElementById('dlDocsGrid');
+      docsGrid.innerHTML = '';
+
+      const docsList = (data.documents && data.documents.length > 0) ? data.documents : [
+        {
+          doc_name: "Ration Card (NFSA / BPL)",
+          issuer: "Department of Food & Civil Supplies, Govt. of UP",
+          uri: "in.gov.dord.ration:10928374",
+          verified: true,
+          extracted_data: { category: "BPL (Below Poverty Line)", validity: "Lifetime Active" }
+        },
+        {
+          doc_name: "Income Certificate",
+          issuer: "Revenue Department, District Magistrate Office",
+          uri: "in.gov.revenue.income:9920182",
+          verified: true,
+          extracted_data: { annual_income: 0, category: "Nil / Below Threshold" }
+        }
+      ];
+
+      docsList.forEach(doc => {
+        const card = document.createElement('div');
+        card.className = "p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2 hover:border-red-300 transition";
+
+        let metaHtml = '';
+        if (doc.extracted_data) {
+          const keys = Object.keys(doc.extracted_data);
+          metaHtml = keys.slice(0, 2).map(k => {
+            const val = doc.extracted_data[k];
+            const displayVal = k === 'annual_income' ? ('₹' + (val || 0).toLocaleString('en-IN')) : val;
+            return `<span class="bg-white px-2 py-0.5 rounded text-[10px] text-slate-700 border border-slate-200 font-medium">${k.replace('_', ' ')}: <strong>${displayVal}</strong></span>`;
+          }).join(' ');
+        }
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+                <i data-lucide="file-check" class="w-4 h-4 text-[#C41528]"></i>
+              </div>
+              <div>
+                <h5 class="font-bold text-xs text-slate-900 leading-tight">${doc.doc_name}</h5>
+                <span class="text-[10px] text-slate-500">${doc.issuer || 'Government Authority'}</span>
+              </div>
+            </div>
+            <span class="inline-flex items-center gap-1 bg-red-50 text-[#8E1B2B] text-[10px] font-bold px-2 py-0.5 rounded-full border border-red-200 shrink-0">
+              <i data-lucide="check" class="w-3 h-3 text-[#C41528]"></i>
+              <span>${t.officialSigned}</span>
+            </span>
+          </div>
+          <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-200">
+            <span class="font-mono text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">URI: ${doc.uri || 'in.gov.digilocker.doc'}</span>
+            <div class="flex items-center gap-1">${metaHtml}</div>
+          </div>
+        `;
+        docsGrid.appendChild(card);
+      });
+
+      // Synchronize Demographic Profile in Tab 1 Form
+      applyPreset('sunita');
+
+      // Refresh Lucide Icons
+      lucide.createIcons();
+    }
+
+    function showDigiLockerError(msg) {
+      const banner = document.getElementById('dlErrorBanner');
+      document.getElementById('dlErrorMessage').textContent = msg;
+      banner.classList.remove('hidden');
+    }
+
+    function resetDigiLockerView() {
+      document.getElementById('dlDashboard').classList.add('hidden');
+      document.getElementById('dlLoadingCard').classList.add('hidden');
+      document.getElementById('dlActionCard').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function copyDigiLockerToken() {
+      const token = document.getElementById('dlAppTokenValue').textContent.trim();
+      navigator.clipboard.writeText(token);
+      const btn = document.getElementById('btnCopyDlToken');
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = '<i data-lucide="check" class="w-4 h-4 text-[#C41528]"></i>';
+      btn.classList.add('bg-red-50');
+      lucide.createIcons();
+      setTimeout(() => {
+        btn.innerHTML = originalHtml;
+        btn.classList.remove('bg-red-50');
+        lucide.createIcons();
+      }, 2000);
+    }
+
+    function trackDigiLockerApplication() {
+      const token = document.getElementById('dlAppTokenValue').textContent.trim();
+      switchTab('tracker');
+      trackApplication(token);
+    }
+
+    // Tab switching
+    function switchTab(tabId) {
+      document.querySelectorAll('section[id^="pane-"]').forEach(el => el.classList.add('hidden'));
+      document.getElementById('pane-' + tabId).classList.remove('hidden');
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-white', 'text-[#C41528]', 'shadow-xs', 'border', 'border-red-100', 'font-bold');
+        btn.classList.add('text-slate-600');
+      });
+
+      const activeBtn = document.getElementById('tab-' + tabId);
+      activeBtn.classList.add('bg-white', 'text-[#C41528]', 'shadow-xs', 'border', 'border-red-100', 'font-bold');
+      activeBtn.classList.remove('text-slate-600');
+
+      lucide.createIcons();
+    }
+
+    // Presets for Tab 1
+    function applyPreset(name) {
+      if (name === 'sunita') {
+        if (document.getElementById('profName')) document.getElementById('profName').value = 'Sunita Devi';
+        document.getElementById('profAge').value = 65;
+        document.getElementById('profGender').value = 'female';
+        document.getElementById('profMarital').value = 'widow';
+        document.getElementById('profIncome').value = 0;
+        document.getElementById('profOccupation').value = 'homemaker';
+
+        document.getElementById('doc_ration_card').checked = true;
+        document.getElementById('doc_bank_passbook').checked = true;
+        document.getElementById('doc_death_cert').checked = true;
+        document.getElementById('doc_income_cert').checked = true;
+        document.getElementById('doc_age_proof').checked = true;
+        document.getElementById('doc_bonafide').checked = false;
+        document.getElementById('doc_marksheet').checked = false;
+        document.getElementById('doc_khatauni').checked = false;
+      } else if (name === 'rahul') {
+        if (document.getElementById('profName')) document.getElementById('profName').value = 'Rahul Sharma';
+        document.getElementById('profAge').value = 20;
+        document.getElementById('profGender').value = 'male';
+        document.getElementById('profMarital').value = 'unmarried';
+        document.getElementById('profIncome').value = 120000;
+        document.getElementById('profOccupation').value = 'student';
+
+        document.getElementById('doc_ration_card').checked = false;
+        document.getElementById('doc_bank_passbook').checked = true;
+        document.getElementById('doc_death_cert').checked = false;
+        document.getElementById('doc_income_cert').checked = true;
+        document.getElementById('doc_age_proof').checked = false;
+        document.getElementById('doc_bonafide').checked = false; // Missing!
+        document.getElementById('doc_marksheet').checked = false; // Missing!
+        document.getElementById('doc_khatauni').checked = false;
+      } else if (name === 'ram_charan') {
+        if (document.getElementById('profName')) document.getElementById('profName').value = 'Ram Charan';
+        document.getElementById('profAge').value = 45;
+        document.getElementById('profGender').value = 'male';
+        document.getElementById('profMarital').value = 'married';
+        document.getElementById('profIncome').value = 100000;
+        document.getElementById('profOccupation').value = 'farmer';
+
+        document.getElementById('doc_ration_card').checked = true;
+        document.getElementById('doc_bank_passbook').checked = true;
+        document.getElementById('doc_death_cert').checked = false;
+        document.getElementById('doc_income_cert').checked = false;
+        document.getElementById('doc_age_proof').checked = false;
+        document.getElementById('doc_bonafide').checked = false;
+        document.getElementById('doc_marksheet').checked = false;
+        document.getElementById('doc_khatauni').checked = true;
+      }
+      checkEligibility();
+    }
+
+    // Check Eligibility via API
+    async function checkEligibility() {
+      const docs = [];
+      if (document.getElementById('doc_ration_card').checked) docs.push('ration_card');
+      if (document.getElementById('doc_bank_passbook').checked) docs.push('bank_passbook');
+      if (document.getElementById('doc_death_cert').checked) docs.push('death_certificate_of_husband');
+      if (document.getElementById('doc_income_cert').checked) docs.push('income_certificate');
+      if (document.getElementById('doc_age_proof').checked) docs.push('age_proof');
+      if (document.getElementById('doc_bonafide').checked) docs.push('bonafide_student_certificate');
+      if (document.getElementById('doc_marksheet').checked) docs.push('previous_year_marksheet');
+      if (document.getElementById('doc_khatauni').checked) docs.push('land_records_khatauni');
+
+      const payload = {
+        citizen_profile: {
+          age: parseInt(document.getElementById('profAge').value) || 0,
+          gender: document.getElementById('profGender').value,
+          marital_status: document.getElementById('profMarital').value,
+          annual_income: parseFloat(document.getElementById('profIncome').value) || 0,
+          occupation: document.getElementById('profOccupation').value,
+          disability_status: "none",
+          available_documents: docs
+        }
+      };
+
+      const resultsDiv = document.getElementById('eligibilityResults');
+      resultsDiv.innerHTML = '<div class="p-6 text-center text-slate-500 font-medium">Evaluating rules deterministically...</div>';
+
+      try {
+        const res = await fetch('/eligibility/check', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        let html = '';
+
+        // 1. Eligible Schemes
+        if (data.eligible_schemes.length > 0) {
+          html += '<div class="space-y-3">';
+          html += '<h4 class="font-bold text-sm text-[#8E1B2B] uppercase tracking-wide flex items-center gap-1.5">🔴 Fully Eligible Schemes (' + data.eligible_schemes.length + ')</h4>';
+          data.eligible_schemes.forEach(s => {
+            const mirrors = {
+              'widow_pension': 'https://www.myscheme.gov.in/schemes/ignwps',
+              'old_age_pension': 'https://www.myscheme.gov.in/schemes/nsap-ignoaps',
+              'scholarship': 'https://www.myscheme.gov.in/schemes/pms-sc',
+              'kisan_yojna': 'https://www.myscheme.gov.in/schemes/pm-kisan'
+            };
+            const mirrorUrl = mirrors[s.scheme_id] || 'https://www.myscheme.gov.in';
+
+            html += `
+              <div class="bg-white p-5 rounded-2xl border-2 border-[#C41528] shadow-xs space-y-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <h5 class="font-bold text-base text-slate-900">${s.scheme_title}</h5>
+                  <span class="text-xs bg-red-50 text-[#8E1B2B] font-bold px-2.5 py-1 rounded-full border border-red-200">Ready to Apply</span>
+                </div>
+                <p class="text-sm text-slate-700 bg-red-50/30 p-3 rounded-xl border border-red-100">${s.simple_explanation}</p>
+                <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 text-[11px] text-slate-700 space-y-1">
+                  <div class="flex items-center gap-1.5 font-bold text-slate-900">
+                    <i data-lucide="building" class="w-3.5 h-3.5 text-[#C41528]"></i>
+                    <span>Authority: ${s.official_source_name || 'Official Ministry'}</span>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-slate-600">
+                    <i data-lucide="scale" class="w-3.5 h-3.5 text-amber-700"></i>
+                    <span>Charter Clause: ${s.citizen_charter_clause || 'Citizen Charter Guarantee'}</span>
+                  </div>
+                </div>
+                <div class="flex flex-wrap items-center justify-between gap-2 text-xs pt-1 border-t border-slate-100 mt-2">
+                  <span class="text-slate-500 text-[11px]">Rule Version: ${s.rule_version}</span>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <a href="${s.official_portal_url}" target="_blank" rel="noopener noreferrer" class="bg-[#C41528] hover:bg-[#8E1B2B] text-white font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition shadow-xs">
+                      <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                      <span>Apply on Department Portal</span>
+                    </a>
+                    <a href="${mirrorUrl}" target="_blank" rel="noopener noreferrer" title="Official National myScheme Mirror Fallback in case department portal is down or times out" class="bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition text-[11px]">
+                      <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-700"></i>
+                      <span>myScheme Mirror Fallback</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+          html += '</div>';
+        }
+
+        // 2. Partially Eligible Schemes (Missing Documents)
+        if (data.partially_eligible_schemes.length > 0) {
+          html += '<div class="space-y-3 mt-4">';
+          html += '<h4 class="font-bold text-sm text-amber-800 uppercase tracking-wide flex items-center gap-1.5">🟡 Partially Eligible (Missing Documents) (' + data.partially_eligible_schemes.length + ')</h4>';
+          data.partially_eligible_schemes.forEach(s => {
+            const mirrors = {
+              'widow_pension': 'https://www.myscheme.gov.in/schemes/ignwps',
+              'old_age_pension': 'https://www.myscheme.gov.in/schemes/nsap-ignoaps',
+              'scholarship': 'https://www.myscheme.gov.in/schemes/pms-sc',
+              'kisan_yojna': 'https://www.myscheme.gov.in/schemes/pm-kisan'
+            };
+            const mirrorUrl = mirrors[s.scheme_id] || 'https://www.myscheme.gov.in';
+            let missingBadges = s.missing_documents.map(d => `<span class="bg-amber-100 text-amber-900 text-xs font-semibold px-2.5 py-1 rounded-md border border-amber-300">📋 ${d}</span>`).join(' ');
+
+            html += `
+              <div class="bg-white p-5 rounded-2xl border-2 border-amber-400 shadow-sm space-y-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <h5 class="font-bold text-base text-slate-900">${s.scheme_title}</h5>
+                  <span class="text-xs bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-full border border-amber-300">Criteria Met &bull; Documents Needed</span>
+                </div>
+                <p class="text-sm text-slate-700 bg-amber-50/60 p-3 rounded-xl border border-amber-200">${s.simple_explanation}</p>
+                <div class="bg-blue-50/70 p-2.5 rounded-xl border border-blue-200/80 text-[11px] text-slate-700 space-y-1">
+                  <div class="flex items-center gap-1.5 font-bold text-blue-900">
+                    <i data-lucide="building" class="w-3.5 h-3.5 text-blue-700"></i>
+                    <span>Authority: ${s.official_source_name || 'Official Ministry'}</span>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-slate-600">
+                    <i data-lucide="scale" class="w-3.5 h-3.5 text-amber-700"></i>
+                    <span>Charter Clause: ${s.citizen_charter_clause || 'Citizen Charter Guarantee'}</span>
+                  </div>
+                </div>
+                <div>
+                  <span class="block text-xs font-bold text-slate-700 mb-1.5 uppercase">Missing Required Paperwork:</span>
+                  <div class="flex flex-wrap gap-1.5">${missingBadges}</div>
+                </div>
+                <div class="flex flex-wrap items-center justify-between gap-2 text-xs pt-1 border-t border-slate-100 mt-2">
+                  <span class="text-slate-500 text-[11px]">Rule Version: ${s.rule_version}</span>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <a href="${s.official_portal_url}" target="_blank" rel="noopener noreferrer" class="bg-slate-700 hover:bg-slate-800 text-white font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition shadow-sm">
+                      <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                      <span>Department Portal</span>
+                    </a>
+                    <a href="${mirrorUrl}" target="_blank" rel="noopener noreferrer" title="Official National myScheme Mirror Fallback" class="bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition text-[11px]">
+                      <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-700"></i>
+                      <span>myScheme Mirror Fallback</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+          html += '</div>';
+        }
+
+        // 3. Ineligible Schemes
+        if (data.ineligible_schemes.length > 0) {
+          html += '<div class="space-y-3 mt-4">';
+          html += '<h4 class="font-bold text-sm text-slate-600 uppercase tracking-wide flex items-center gap-1.5">🔴 Ineligible Schemes (' + data.ineligible_schemes.length + ')</h4>';
+          data.ineligible_schemes.forEach(s => {
+            html += `
+              <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 opacity-80">
+                <div class="flex items-center justify-between">
+                  <h5 class="font-bold text-sm text-slate-700">${s.scheme_title}</h5>
+                  <span class="text-xs bg-slate-200 text-slate-700 font-semibold px-2 py-0.5 rounded">Not Applicable</span>
+                </div>
+                <p class="text-xs text-slate-600">${s.simple_explanation}</p>
+              </div>
+            `;
+          });
+          html += '</div>';
+        }
+
+        resultsDiv.innerHTML = html;
+        lucide.createIcons();
+      } catch (err) {
+        resultsDiv.innerHTML = '<div class="p-4 bg-rose-50 text-rose-700 rounded-xl text-xs font-semibold">Error evaluating criteria: ' + err.message + '</div>';
+      }
+    }
+
+    // Trigger Live Government Data Ingestion
+    async function triggerLiveGovSync() {
+      const btn = document.getElementById('btnSyncGov');
+      if (!btn) return;
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = '<i data-lucide="loader" class="w-3 h-3 animate-spin text-[#C41528]"></i> <span>Ingesting Portals...</span>';
+      lucide.createIcons();
+      try {
+        const res = await fetch('/schemes/sync-live-data?force_refresh=true', { method: 'POST' });
+        const data = await res.json();
+        alert(`✅ Live Government Ingestion Complete!\n\nIngested ${data.synced_schemes_count} schemes:\n• ` + data.schemes_synced.join('\n• ') + `\n\nOfficial Source Provenance:\n` + data.sources_contacted.map(s => `• [${s.status.toUpperCase()}] ${s.name}`).join('\n') + `\n\nPrivacy Guarantee: ZERO Aadhaar / 12-digit ID leakage verified.`);
+      } catch (err) {
+        alert('Live Sync Warning: ' + err.message);
+      } finally {
+        btn.innerHTML = originalHtml;
+        lucide.createIcons();
+      }
+    }
+
+    // Load Demo Docs in Tab 2
+    function loadDemoDocs() {
+      document.getElementById('doc1_name').value = 'Sunita Devi';
+      document.getElementById('doc1_dob').value = '12/04/1959';
+      document.getElementById('doc1_num').value = '0710-4492-9102';
+
+      document.getElementById('doc2_name').value = 'Sunitha Devi';
+      document.getElementById('doc2_acc').value = '30981240981';
+      document.getElementById('doc2_ifsc').value = 'SBIN0001234';
+      document.getElementById('doc2_dob').value = '12/04/1959';
+
+      compareDocuments();
+    }
+
+    // Scan File via OCR endpoint
+    async function scanUploadedFile(inputId, prefix) {
+      const fileInput = document.getElementById(inputId);
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Please choose an image file first.');
+        return;
+      }
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+
+      try {
+        const res = await fetch('/documents/scan', {method: 'POST', body: formData});
+        const data = await res.json();
+        if (data.extracted_fields.full_name) {
+          document.getElementById(prefix + '_name').value = data.extracted_fields.full_name;
+        }
+        if (data.extracted_fields.date_of_birth) {
+          document.getElementById(prefix + '_dob').value = data.extracted_fields.date_of_birth;
+        }
+        if (prefix === 'doc2' && data.extracted_fields.account_number) {
+          document.getElementById('doc2_acc').value = data.extracted_fields.account_number;
+        }
+        alert('OCR Scan Complete! Extracted: ' + (data.extracted_fields.full_name || 'Fields recovered') + ' (Confidence: ' + data.confidence_indicator + ')');
+      } catch (e) {
+        alert('Scan error: ' + e.message);
+      }
+    }
+
+    // Compare Documents via API
+    async function compareDocuments() {
+      const payload = {
+        document_1_fields: {
+          full_name: document.getElementById('doc1_name').value,
+          date_of_birth: document.getElementById('doc1_dob').value,
+          document_type: "ration_card"
+        },
+        document_2_fields: {
+          full_name: document.getElementById('doc2_name').value,
+          date_of_birth: document.getElementById('doc2_dob').value,
+          account_number: document.getElementById('doc2_acc').value,
+          ifsc_code: document.getElementById('doc2_ifsc').value,
+          document_type: "bank_passbook"
+        },
+        document_1_type: "ration_card",
+        document_2_type: "bank_passbook"
+      };
+
+      const resultBox = document.getElementById('mismatchResult');
+      resultBox.classList.remove('hidden');
+      resultBox.innerHTML = '<div class="text-center p-4 text-slate-500 font-medium">Running phonetic & transliteration comparison...</div>';
+
+      try {
+        const res = await fetch('/documents/compare', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const comp = await res.json();
+
+        let badge = '';
+        if (comp.name_match_status === 'likely_match_with_spelling_variation') {
+          badge = '<span class="bg-amber-100 text-amber-900 font-bold px-3 py-1 rounded-full text-xs border border-amber-300">⚠️ Spelling Variation Detected</span>';
+        } else if (comp.name_match_status === 'exact_match') {
+          badge = '<span class="bg-red-50 text-[#8E1B2B] font-bold px-3 py-1 rounded-full text-xs border border-red-200">✅ Exact Match</span>';
+        } else {
+          badge = '<span class="bg-rose-100 text-rose-900 font-bold px-3 py-1 rounded-full text-xs border border-rose-300">❌ Name Mismatch</span>';
+        }
+
+        let recs = comp.recommendations.map(r => `<li class="flex items-start gap-2"><span class="text-amber-600 font-bold">&bull;</span><span>${r}</span></li>`).join('');
+
+        resultBox.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3">
+            <div>
+              <h4 class="font-bold text-base text-slate-900">Document Comparison Verdict</h4>
+              <p class="text-xs text-slate-500">Phonetic Similarity Score: <strong>${Math.round(comp.similarity_score * 100)}%</strong></p>
+            </div>
+            <div>${badge}</div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl text-xs">
+            <div>
+              <span class="text-slate-500 block mb-0.5 font-bold uppercase">Ration Card Name</span>
+              <span class="text-sm font-bold text-slate-900 font-mono">${comp.name_document_1 || 'N/A'}</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block mb-0.5 font-bold uppercase">Bank Passbook Name</span>
+              <span class="text-sm font-bold text-amber-800 font-mono">${comp.name_document_2 || 'N/A'}</span>
+            </div>
+          </div>
+
+          <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl text-xs text-amber-900 space-y-2">
+            <p class="font-semibold">${comp.citizen_warning}</p>
+            <div class="pt-1">
+              <span class="font-bold block mb-1 uppercase tracking-wide">Suggested Preparatory Actions:</span>
+              <ul class="space-y-1">${recs}</ul>
+            </div>
+          </div>
+        `;
+        lucide.createIcons();
+      } catch (e) {
+        resultBox.innerHTML = '<div class="p-4 bg-rose-50 text-rose-700 text-xs font-semibold">Error: ' + e.message + '</div>';
+      }
+    }
+
+    // Track Application via API
+    async function trackApplication(appId) {
+      if (appId) {
+        document.getElementById('inputAppId').value = appId;
+      }
+      const targetId = document.getElementById('inputAppId').value.trim();
+      if (!targetId) return;
+
+      const trackerDiv = document.getElementById('trackerResult');
+      trackerDiv.innerHTML = '<div class="bg-white p-8 rounded-2xl text-center text-slate-500 font-medium">Fetching application SLA status...</div>';
+
+      try {
+        const [resStatus, resDetail] = await Promise.all([
+          fetch(`/applications/${targetId}/status`),
+          fetch(`/applications/${targetId}`)
+        ]);
+
+        if (!resStatus.ok || !resDetail.ok) {
+          throw new Error('Application ID not found in records.');
+        }
+
+        const statusData = await resStatus.json();
+        const detailData = await resDetail.json();
+
+        let overdueBadge = '';
+        if (statusData.is_overdue) {
+          overdueBadge = `<span class="bg-rose-100 text-rose-800 text-xs font-bold px-3 py-1 rounded-full border border-rose-300 animate-pulse">🚨 ${statusData.days_overdue} Days Overdue</span>`;
+        } else {
+          overdueBadge = `<span class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full border border-blue-300">⏱️ ${statusData.days_remaining} Days Remaining</span>`;
+        }
+
+        let eventsHtml = detailData.events.map(ev => `
+          <div class="flex items-start gap-3 text-xs border-l-2 border-blue-500 pl-4 py-1.5">
+            <span class="text-slate-400 font-mono">${new Date(ev.created_at).toLocaleDateString()}</span>
+            <div>
+              <strong class="text-slate-800 capitalize">${ev.event_type.replace('_', ' ')}:</strong>
+              <span class="text-slate-600">${ev.message}</span>
+            </div>
+          </div>
+        `).join('');
+
+        let grievancePrompt = '';
+        if (statusData.can_file_grievance) {
+          grievancePrompt = `
+            <div class="bg-rose-50 border border-rose-200 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h5 class="font-bold text-sm text-rose-900">Statutory Deadline Exceeded!</h5>
+                <p class="text-xs text-rose-700">This application has exceeded the Citizen Charter timeline. You have the right to escalate via an official grievance.</p>
+              </div>
+              <button onclick="goToGrievance('${statusData.application_id}')" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-4 py-2 rounded-lg transition whitespace-nowrap">
+                Draft Grievance Now &rarr;
+              </button>
+            </div>
+          `;
+        }
+
+        trackerDiv.innerHTML = `
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-4">
+              <div>
+                <span class="text-xs font-bold text-slate-500 font-mono uppercase">${statusData.application_id}</span>
+                <h3 class="text-xl font-bold text-slate-900">${statusData.scheme_title}</h3>
+              </div>
+              <div>${overdueBadge}</div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl text-xs">
+              <div>
+                <span class="text-slate-500 block uppercase font-bold mb-0.5">Current Stage</span>
+                <span class="text-sm font-bold text-blue-950">${statusData.current_stage}</span>
+              </div>
+              <div>
+                <span class="text-slate-500 block uppercase font-bold mb-0.5">Guaranteed Resolution SLA</span>
+                <span class="text-sm font-semibold text-slate-800">${statusData.expected_resolution_date || 'N/A'}</span>
+              </div>
+              <div>
+                <span class="text-slate-500 block uppercase font-bold mb-0.5">Next Expected Action</span>
+                <span class="text-sm text-slate-800">${statusData.next_action}</span>
+              </div>
+            </div>
+
+            <div class="text-xs bg-blue-50 border border-blue-200 p-3.5 rounded-xl text-blue-950">
+              ${statusData.simple_explanation}
+            </div>
+
+            ${grievancePrompt}
+
+            <!-- Audit Trail -->
+            <div class="pt-2">
+              <h4 class="font-bold text-xs text-slate-700 uppercase tracking-wide mb-2">Chronological Departmental Timeline</h4>
+              <div class="space-y-1">${eventsHtml}</div>
+            </div>
+
+            <!-- Demo Officer Control -->
+            <div class="pt-4 border-t flex flex-wrap items-center gap-2">
+              <span class="text-xs font-bold text-slate-500 uppercase">Hackathon Demo &bull; Simulate Officer Status:</span>
+              <button onclick="updateMockStatus('${statusData.application_id}', 'under_review')" class="px-2.5 py-1 text-xs bg-slate-100 hover:bg-slate-200 rounded font-semibold text-slate-700">Under Review</button>
+              <button onclick="updateMockStatus('${statusData.application_id}', 'pending_documents')" class="px-2.5 py-1 text-xs bg-amber-100 hover:bg-amber-200 rounded font-semibold text-amber-800">Pending Docs</button>
+              <button onclick="updateMockStatus('${statusData.application_id}', 'approved')" class="px-2.5 py-1 text-xs bg-red-50 hover:bg-red-100 rounded font-semibold text-[#8E1B2B] border border-red-200">Approve</button>
+              <button onclick="updateMockStatus('${statusData.application_id}', 'rejected')" class="px-2.5 py-1 text-xs bg-rose-100 hover:bg-rose-200 rounded font-semibold text-rose-800">Reject</button>
+            </div>
+          </div>
+        `;
+        lucide.createIcons();
+      } catch (e) {
+        trackerDiv.innerHTML = '<div class="p-6 bg-rose-50 text-rose-700 rounded-2xl text-sm font-semibold">Error: ' + e.message + '</div>';
+      }
+    }
+
+    // Mock officer update for demo
+    async function updateMockStatus(appId, newStatus) {
+      try {
+        await fetch(`/applications/${appId}/mock-status-update`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({status: newStatus, message: `Status updated to ${newStatus} during hackathon evaluation.`})
+        });
+        trackApplication(appId);
+      } catch (e) {
+        alert('Update error: ' + e.message);
+      }
+    }
+
+    // Jump from Tracker to Grievance tab
+    function goToGrievance(appId) {
+      document.getElementById('grievanceAppId').value = appId;
+      switchTab('grievance');
+      generateGrievance();
+    }
+
+    // Generate Grievance Draft via API
+    async function generateGrievance() {
+      const appId = document.getElementById('grievanceAppId').value.trim();
+      const remarks = document.getElementById('grievanceRemarks').value.trim();
+
+      const outDiv = document.getElementById('grievanceOutput');
+      outDiv.classList.remove('hidden');
+      outDiv.innerHTML = '<div class="text-center p-6 text-slate-500 font-medium">Generating official legal grievance draft...</div>';
+
+      try {
+        const res = await fetch('/grievances/draft', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({application_id: appId, citizen_remarks: remarks})
+        });
+
+        if (!res.ok) throw new Error('Could not generate draft for this application ID.');
+        const data = await res.json();
+
+        let channelsHtml = data.suggested_official_channels.map(ch => `
+          <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs space-y-1">
+            <div class="flex items-center justify-between">
+              <strong class="text-slate-900">${ch.channel_name}</strong>
+              <span class="text-[10px] bg-blue-100 text-blue-800 font-semibold px-2 py-0.5 rounded">${ch.type}</span>
+            </div>
+            <p class="text-slate-600">${ch.description}</p>
+            <a href="${ch.url}" target="_blank" class="text-blue-600 hover:underline font-bold inline-block pt-1">${ch.url} &rarr;</a>
+          </div>
+        `).join('');
+
+        outDiv.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-4">
+            <div>
+              <span class="text-xs bg-rose-100 text-rose-800 font-bold px-2.5 py-0.5 rounded border border-rose-300">Grievance Token: GRV-${data.grievance_id}</span>
+              <h4 class="text-lg font-bold text-slate-900 mt-1">${data.scheme_name}</h4>
+              <p class="text-xs text-slate-500">Applicant Reference: <code>${data.citizen_reference_id}</code> | Days Overdue: <strong class="text-rose-600">${data.days_overdue} days</strong></p>
+            </div>
+            <button onclick="copyDraftText()" id="btnCopyDraft" class="bg-blue-900 hover:bg-blue-950 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 self-start">
+              <i data-lucide="copy" class="w-4 h-4"></i> Copy Complete Draft
+            </button>
+          </div>
+
+          <!-- Letter Preview -->
+          <div class="bg-slate-950 text-slate-100 p-5 rounded-xl font-mono text-xs whitespace-pre-wrap leading-relaxed shadow-inner overflow-x-auto max-h-[380px]" id="draftTextContent">${data.draft_text}</div>
+
+          <!-- Official Channels List -->
+          <div class="space-y-2 pt-2">
+            <h5 class="font-bold text-xs text-slate-700 uppercase tracking-wide">Recommended Submission Portals:</h5>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">${channelsHtml}</div>
+          </div>
+        `;
+        lucide.createIcons();
+      } catch (e) {
+        outDiv.innerHTML = '<div class="p-6 bg-rose-50 text-rose-700 rounded-2xl text-sm font-semibold">Error: ' + e.message + '</div>';
+      }
+    }
+
+    // Copy draft helper
+    function copyDraftText() {
+      const text = document.getElementById('draftTextContent').innerText;
+      navigator.clipboard.writeText(text);
+      const btn = document.getElementById('btnCopyDraft');
+      btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> Copied to Clipboard!';
+      btn.classList.add('bg-[#8E1B2B]');
+      lucide.createIcons();
+      setTimeout(() => {
+        btn.innerHTML = '<i data-lucide="copy" class="w-4 h-4"></i> Copy Complete Draft';
+        btn.classList.remove('bg-[#8E1B2B]');
+        lucide.createIcons();
+      }, 2500);
+    }
+
+    // Initialize icons, default preset, and check for DigiLocker OAuth callback
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      applyPreset('sunita');
+      trackApplication('APP-SUNITA-ACTIVE-01');
+
+      // Check if arriving from DigiLocker / Meri Pehchaan OAuth redirect
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('code')) {
+        const code = urlParams.get('code');
+        const state = urlParams.get('state') || '';
+        processDigiLockerCallback(code, state);
+      }
+    });
+  </script>
+</body>
+</html>

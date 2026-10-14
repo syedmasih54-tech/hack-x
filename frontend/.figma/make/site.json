@@ -1,0 +1,12 @@
+{
+  "title": "BenefitBridge — योजना सहायता",
+  "language": "hi",
+  "description": "This user-friendly web app helps individuals assess their eligibility for government schemes by collecting real input, providing personalized results, and ensuring data privacy.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

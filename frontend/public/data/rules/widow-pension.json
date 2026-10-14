@@ -1,0 +1,50 @@
+[
+  {
+    "id": "widow-status",
+    "label_hi": "वैवाहिक स्थिति विधवा है",
+    "label_en": "Marital status is widowed",
+    "field": "maritalStatus",
+    "operator": "equals",
+    "value": "widowed",
+    "source_url": "https://nsap.nic.in/",
+    "version": "PLACEHOLDER_REPLACE_FROM_OFFICIAL_NSAP",
+    "last_verified": null,
+    "placeholder": true
+  },
+  {
+    "id": "minimum-age",
+    "label_hi": "न्यूनतम आयु पूरी होती है",
+    "label_en": "Minimum age is met",
+    "field": "age",
+    "operator": "min",
+    "value": 18,
+    "source_url": "https://nsap.nic.in/",
+    "version": "PLACEHOLDER_REPLACE_FROM_OFFICIAL_NSAP",
+    "last_verified": null,
+    "placeholder": true
+  },
+  {
+    "id": "bpl-proof",
+    "label_hi": "BPL राशन कार्ड उपलब्ध है",
+    "label_en": "BPL ration card is available",
+    "field": "rationCard",
+    "operator": "equals",
+    "value": "bpl",
+    "source_url": "https://nsap.nic.in/",
+    "version": "PLACEHOLDER_REPLACE_FROM_OFFICIAL_NSAP",
+    "last_verified": null,
+    "placeholder": true
+  },
+  {
+    "id": "bank-account",
+    "label_hi": "बैंक खाता उपलब्ध है",
+    "label_en": "Bank account is available",
+    "field": "bankAccount",
+    "operator": "equals",
+    "value": "yes",
+    "source_url": "https://nsap.nic.in/",
+    "version": "PLACEHOLDER_REPLACE_FROM_OFFICIAL_NSAP",
+    "last_verified": null,
+    "placeholder": true
+  }
+]
