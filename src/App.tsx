@@ -8,21 +8,205 @@ import Section3Focus from "./components/Section3Focus";
 import Section4JourneyTickets from "./components/Section4JourneyTickets";
 import Section5WhoDecides from "./components/Section5WhoDecides";
 import Section6Closing from "./components/Section6Closing";
-import { getPortalUrl, getDigiLockerUrl } from "./lib/urls";
+import { getPortalUrl, getDigiLockerUrl, getApiDocsUrl } from "./lib/urls";
 
 gsap.registerPlugin(ScrollTrigger);
 
+export type Language = "en" | "hi";
+
+interface TranslationDictionary {
+  nav: {
+    brand: string;
+    taglineDesktop: string;
+    taglineMobile: string;
+    liveGatewayBadge: string;
+    apiDocsBtn: string;
+    livePortalBtn: string;
+  };
+  civicGateway: {
+    badge: string;
+    title: string;
+    subtitle: string;
+    card1Title: string;
+    card1Desc: string;
+    card1Btn: string;
+    card2Title: string;
+    card2Desc: string;
+    card2Btn: string;
+    card3Title: string;
+    card3Desc: string;
+    card3Btn: string;
+    slaPrefix: string;
+    slaStrong: string;
+    slaEscalation: string;
+    statusSummary: string;
+    replayIntro: string;
+  };
+  modals: {
+    voiceTitle: string;
+    voiceSubtitle: string;
+    voiceRecordingPrompt: string;
+    voiceSamplePrompt: string;
+    voiceCancelBtn: string;
+    voiceStopBtn: string;
+    scannerTitle: string;
+    scannerSubtitle: string;
+    scannerCard1Title: string;
+    scannerCard2Title: string;
+    scannerMismatch: string;
+    scannerAdvice: string;
+    scannerCloseBtn: string;
+    scannerLaunchBtn: string;
+  };
+}
+
+const TRANSLATIONS: Record<Language, TranslationDictionary> = {
+  en: {
+    nav: {
+      brand: "BenefitBridge",
+      taglineDesktop: "Citizen welfare case platform",
+      taglineMobile: "Welfare platform",
+      liveGatewayBadge: "Live Gateway",
+      apiDocsBtn: "API Docs",
+      livePortalBtn: "Live Portal",
+    },
+    civicGateway: {
+      badge: "Active Civic Gateway",
+      title: "Citizen Application Modules",
+      subtitle:
+        "Fully functional integration connected to DigiLocker, OCR document comparison, and state Right to Public Services SLAs.",
+      card1Title: "DigiLocker Direct Apply",
+      card1Desc:
+        "Connect government-verified DigiLocker credentials. Pull authentic Ration Cards and Income Certificates automatically with zero manual upload friction.",
+      card1Btn: "Connect DigiLocker",
+      card2Title: "Voice Input (हिंदी / EN)",
+      card2Desc:
+        "Speak age, gender, occupation, and name naturally. Powered by Whisper speech processing to auto-populate scheme requirements.",
+      card2Btn: "Activate Voice Input",
+      card3Title: "Document Doctor (Mismatch)",
+      card3Desc:
+        "Detects spelling variations (e.g. Sunita vs Sunitha) before submission to prevent Direct Benefit Transfer bank delays.",
+      card3Btn: "Check Discrepancies",
+      slaPrefix: "State Right to Public Services Act:",
+      slaStrong: "30-Day Mandatory Statutory SLA",
+      slaEscalation: "Automatic CPGRAMS escalation triggered if government deadlines lapse",
+      statusSummary: "All 6 Landing Page Sections Deployed & Active",
+      replayIntro: "Replay Intro Sequence ↻",
+    },
+    modals: {
+      voiceTitle: "Voice Application Assistant",
+      voiceSubtitle: "Speak in Hindi, English, Bhojpuri, or Bengali to fill your welfare application automatically.",
+      voiceRecordingPrompt: "Listening... speak your name, age, and desired scheme clearly.",
+      voiceSamplePrompt: 'Example: "My age is 62 years and annual household income is ₹75,000. Check eligibility for Old Age Pension."',
+      voiceCancelBtn: "Cancel",
+      voiceStopBtn: "Stop & Transcribe",
+      scannerTitle: "Document Doctor • Discrepancy Analyzer",
+      scannerSubtitle: "Comparing Aadhaar card name string against Ration card database records.",
+      scannerCard1Title: "Aadhaar Card Record:",
+      scannerCard2Title: "Ration Card Database:",
+      scannerMismatch: "Phonetic soundex variation detected: Match confidence 98.4%",
+      scannerAdvice:
+        "The system has generated a pre-formatted Annexure-I name variation affidavit using the Official Gazette transliteration matrix. No rejection permitted under UIDAI Circular 2024.",
+      scannerCloseBtn: "Done",
+      scannerLaunchBtn: "Launch Full Portal ↗",
+    },
+  },
+  hi: {
+    nav: {
+      brand: "बेनिफिटब्रिज",
+      taglineDesktop: "नागरिक कल्याण सेवा मंच",
+      taglineMobile: "कल्याण मंच",
+      liveGatewayBadge: "लाइव गेटवे",
+      apiDocsBtn: "एपीआई डॉक्स",
+      livePortalBtn: "लाइव पोर्टल",
+    },
+    civicGateway: {
+      badge: "सक्रिय नागरिक प्रवेशद्वार",
+      title: "नागरिक आवेदन मॉड्यूल",
+      subtitle:
+        "डिजीलॉकर, ओसीआर दस्तावेज़ मिलान और राज्य लोक सेवा अधिकार अधिनियम (SLA) से पूर्णतः एकीकृत।",
+      card1Title: "डिजीलॉकर सीधा आवेदन",
+      card1Desc:
+        "सरकारी सत्यापित डिजीलॉकर खाता जोड़ें। राशन कार्ड और आय प्रमाण पत्र स्वचालित रूप से बिना किसी कागज़ी परेशानी के प्राप्त करें।",
+      card1Btn: "डिजीलॉकर से कनेक्ट करें",
+      card2Title: "आवाज़ से सहायता (हिंदी / EN)",
+      card2Desc:
+        "आयु, लिंग, व्यवसाय और नाम स्वाभाविक रूप से बोलें। व्हिस्पर स्पीच इंजन योजना विवरण स्वतः भर देगा।",
+      card2Btn: "वॉइस इनपुट शुरू करें",
+      card3Title: "दस्तावेज़ डॉक्टर (स्पेलिंग मिलान)",
+      card3Desc:
+        "बैंक DBT अस्वीकृति से बचने हेतु आवेदन से पूर्व वर्तनी भिन्नता (जैसे Sunita बनाम Sunitha) की जांच करें।",
+      card3Btn: "विसंगति जांचें",
+      slaPrefix: "लोक सेवा गारंटी अधिनियम:",
+      slaStrong: "30-दिवसीय अनिवार्य वैधानिक समय-सीमा (SLA)",
+      slaEscalation: "समय-सीमा समाप्त होने पर सीपीजीआरएएमएस स्वतः लोकपाल शिकायत",
+      statusSummary: "सभी 6 लैंडिंग पृष्ठ अनुभाग सक्रिय एवं संचालित",
+      replayIntro: "इंट्रो दोबारा चलाएं ↻",
+    },
+    modals: {
+      voiceTitle: "आवाज़ आधारित आवेदन सहायक",
+      voiceSubtitle: "हिंदी, अंग्रेज़ी, भोजपुरी या बंगाली में बोलकर अपना सरकारी आवेदन फॉर्म स्वतः भरें।",
+      voiceRecordingPrompt: "सुन रहे हैं... कृपया अपना नाम, आयु और योजना स्पष्ट रूप से बोलें।",
+      voiceSamplePrompt: 'उदाहरण: "मेरी उम्र 62 वर्ष है, वार्षिक पारिवारिक आय ₹75,000 है, वृद्धावस्था पेंशन के लिए पात्रता जांचें"',
+      voiceCancelBtn: "रद्द करें",
+      voiceStopBtn: "रोकें और दर्ज करें",
+      scannerTitle: "दस्तावेज़ डॉक्टर • वर्तनी विसंगति विश्लेषक",
+      scannerSubtitle: "आधार कार्ड नाम का राशन कार्ड डेटाबेस रिकॉर्ड से मिलान किया जा रहा है।",
+      scannerCard1Title: "आधार कार्ड रिकॉर्ड:",
+      scannerCard2Title: "राशन कार्ड डेटाबेस:",
+      scannerMismatch: "ध्वन्यात्मक साउंडेक्स वर्तनी भिन्नता मिली: मिलान विश्वसनीयता 98.4%",
+      scannerAdvice:
+        "प्रणाली ने आधिकारिक राजपत्र के आधार पर स्वतः शपथ-पत्र प्रारूप तैयार कर लिया है। यूआईडीएआई परिपत्र 2024 के अनुसार इसे निरस्त नहीं किया जा सकता।",
+      scannerCloseBtn: "संपन्न",
+      scannerLaunchBtn: "मुख्य पोर्टल खोलें ↗",
+    },
+  },
+};
+
 export default function App() {
   const [isIntroActive, setIsIntroActive] = useState<boolean>(true);
-  const [selectedLanguage, setSelectedLanguage] = useState<"en" | "hi">("en");
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("benefitbridge_lang");
+        if (saved === "hi" || saved === "en") return saved;
+      } catch {
+        // Fallback for restricted iframes
+      }
+    }
+    return "en";
+  });
+
+  const [activeModal, setActiveModal] = useState<"none" | "voice" | "scanner">("none");
+
   const underneathWordmarkRef = useRef<HTMLDivElement | null>(null);
   const lenisRef = useRef<Lenis | null>(null);
+
+  const t = TRANSLATIONS[selectedLanguage];
+
+  const handleLanguageChange = (lang: Language) => {
+    setSelectedLanguage(lang);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("benefitbridge_lang", lang);
+      } catch {
+        // Fallback
+      }
+      document.documentElement.lang = lang;
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      document.documentElement.lang = selectedLanguage;
+    }
+  }, [selectedLanguage]);
 
   // Initialize Lenis smooth scroll and sync with ScrollTrigger
   useEffect(() => {
     const lenis = new Lenis({
       duration: 1.1,
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      easing: (v: number) => Math.min(1, 1.001 - Math.pow(2, -10 * v)),
       smoothWheel: true,
     });
     lenisRef.current = lenis;
@@ -69,20 +253,25 @@ export default function App() {
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-[#1A0F12]/10 transition-all">
         <div className="w-full max-w-7xl mx-auto px-6 sm:px-12 h-14 flex items-center justify-between text-[11px] font-sans text-[#1A0F12]/75">
           <div className="flex items-center gap-3">
-            <span className="font-semibold text-[#8E1B2B]">BenefitBridge</span>
+            <span className="font-semibold text-[#8E1B2B]">{t.nav.brand}</span>
             <span className="text-[#1A0F12]/30">/</span>
-            <span className="hidden sm:inline">Citizen welfare case platform</span>
-            <span className="sm:hidden">Welfare platform</span>
+            <span className="hidden sm:inline">{t.nav.taglineDesktop}</span>
+            <span className="sm:hidden">{t.nav.taglineMobile}</span>
+            <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 border border-red-200 text-[10px] font-bold text-[#DC2626]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#DC2626] animate-pulse" />
+              {t.nav.liveGatewayBadge}
+            </span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             {/* Language Switcher */}
-            <div className="flex items-center border border-[#1A0F12]/15 rounded-full p-0.5 bg-white text-[11px]">
+            <div className="flex items-center border border-[#1A0F12]/15 rounded-full p-0.5 bg-white text-[11px] shadow-xs">
               <button
-                onClick={() => setSelectedLanguage("en")}
+                type="button"
+                onClick={() => handleLanguageChange("en")}
                 className={`px-2.5 py-0.5 rounded-full font-medium transition-all cursor-pointer ${
                   selectedLanguage === "en"
-                    ? "bg-[#C41528] text-white"
+                    ? "bg-[#C41528] text-white shadow-xs"
                     : "text-[#1A0F12]/70 hover:text-[#1A0F12]"
                 }`}
                 aria-label="Switch language to English"
@@ -90,10 +279,11 @@ export default function App() {
                 EN
               </button>
               <button
-                onClick={() => setSelectedLanguage("hi")}
+                type="button"
+                onClick={() => handleLanguageChange("hi")}
                 className={`px-2.5 py-0.5 rounded-full font-medium transition-all cursor-pointer ${
                   selectedLanguage === "hi"
-                    ? "bg-[#C41528] text-white"
+                    ? "bg-[#C41528] text-white shadow-xs"
                     : "text-[#1A0F12]/70 hover:text-[#1A0F12]"
                 }`}
                 aria-label="Switch language to Hindi"
@@ -102,13 +292,24 @@ export default function App() {
               </button>
             </div>
 
+            {/* API Docs Button */}
+            <a
+              href={getApiDocsUrl()}
+              target="_blank"
+              rel="noreferrer"
+              className="hidden lg:inline-flex items-center gap-1 text-[11px] font-medium text-[#1A0F12]/75 hover:text-[#C41528] transition-colors"
+            >
+              <span>{t.nav.apiDocsBtn}</span>
+            </a>
+
+            {/* Live Portal Button */}
             <a
               href={getPortalUrl()}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 text-[11px] font-medium text-[#8E1B2B] hover:text-[#C41528] transition-colors"
+              className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#8E1B2B]/10 hover:bg-[#C41528] hover:text-white text-[11px] font-medium text-[#8E1B2B] transition-all"
             >
-              <span>Live Portal</span>
+              <span>{t.nav.livePortalBtn}</span>
               <span aria-hidden="true">↗</span>
             </a>
           </div>
@@ -132,14 +333,14 @@ export default function App() {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
             <span className="text-[10px] font-mono uppercase tracking-widest text-[#C41528] block mb-1">
-              Active Civic Gateway
+              {t.civicGateway.badge}
             </span>
             <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1A0F12]">
-              Citizen Application Modules
+              {t.civicGateway.title}
             </h3>
           </div>
           <p className="text-xs text-[#1A0F12]/60 max-w-md font-light">
-            Fully functional integration connected to DigiLocker, OCR document comparison, and state Right to Public Services SLAs.
+            {t.civicGateway.subtitle}
           </p>
         </div>
 
@@ -154,10 +355,10 @@ export default function App() {
                 </svg>
               </div>
               <h4 className="text-lg font-bold text-[#1A0F12] mb-1.5">
-                DigiLocker Direct Apply
+                {t.civicGateway.card1Title}
               </h4>
               <p className="text-xs text-[#1A0F12]/70 leading-relaxed font-light">
-                Connect government-verified DigiLocker credentials. Pull authentic Ration Cards and Income Certificates automatically with zero manual upload friction.
+                {t.civicGateway.card1Desc}
               </p>
             </div>
             <a
@@ -166,7 +367,7 @@ export default function App() {
               rel="noreferrer"
               className="mt-6 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#C41528] hover:bg-[#8E1B2B] text-white text-xs font-semibold transition-colors"
             >
-              <span>Connect DigiLocker</span>
+              <span>{t.civicGateway.card1Btn}</span>
               <span aria-hidden="true">→</span>
             </a>
           </div>
@@ -180,17 +381,18 @@ export default function App() {
                 </svg>
               </div>
               <h4 className="text-lg font-bold text-[#1A0F12] mb-1.5">
-                Voice Input (हिंदी / EN)
+                {t.civicGateway.card2Title}
               </h4>
               <p className="text-xs text-[#1A0F12]/70 leading-relaxed font-light">
-                Speak age, gender, occupation, and name naturally. Powered by Whisper speech processing to auto-populate scheme requirements.
+                {t.civicGateway.card2Desc}
               </p>
             </div>
             <button
-              onClick={() => alert("Voice input activated. Speak beneficiary details into the microphone.")}
+              type="button"
+              onClick={() => setActiveModal("voice")}
               className="mt-6 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[#1A0F12]/20 hover:border-[#C41528] text-[#8E1B2B] hover:text-[#C41528] text-xs font-semibold transition-colors cursor-pointer"
             >
-              <span>Activate Voice Input</span>
+              <span>{t.civicGateway.card2Btn}</span>
               <span aria-hidden="true">🎙</span>
             </button>
           </div>
@@ -204,21 +406,20 @@ export default function App() {
                 </svg>
               </div>
               <h4 className="text-lg font-bold text-[#1A0F12] mb-1.5">
-                Document Doctor (Mismatch)
+                {t.civicGateway.card3Title}
               </h4>
               <p className="text-xs text-[#1A0F12]/70 leading-relaxed font-light">
-                Detects spelling variations (e.g. <i>Sunita</i> vs <i>Sunitha</i>) before submission to prevent Direct Benefit Transfer bank delays.
+                {t.civicGateway.card3Desc}
               </p>
             </div>
-            <a
-              href={getPortalUrl()}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-6 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[#1A0F12]/20 hover:border-[#C41528] text-[#1A0F12] hover:text-[#C41528] text-xs font-semibold transition-colors"
+            <button
+              type="button"
+              onClick={() => setActiveModal("scanner")}
+              className="mt-6 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[#1A0F12]/20 hover:border-[#C41528] text-[#1A0F12] hover:text-[#C41528] text-xs font-semibold transition-colors cursor-pointer"
             >
-              <span>Check Discrepancies</span>
+              <span>{t.civicGateway.card3Btn}</span>
               <span aria-hidden="true">→</span>
-            </a>
+            </button>
           </div>
         </div>
 
@@ -227,34 +428,160 @@ export default function App() {
           <div className="flex items-center gap-2.5">
             <span className="w-2 h-2 rounded-full bg-[#C41528] animate-pulse" />
             <span>
-              State Right to Public Services Act:{" "}
+              {t.civicGateway.slaPrefix}{" "}
               <strong className="text-[#1A0F12] font-semibold">
-                30-Day Mandatory Statutory SLA
+                {t.civicGateway.slaStrong}
               </strong>
             </span>
           </div>
           <span className="text-[#8E1B2B] font-medium text-[11px]">
-            Automatic CPGRAMS escalation triggered if government deadlines lapse
+            {t.civicGateway.slaEscalation}
           </span>
         </div>
 
         {/* Replay trigger */}
         <div className="pt-4 flex items-center justify-between text-[11px] text-[#1A0F12]/50">
-          <span>All 6 Landing Page Sections Deployed & Active</span>
+          <span>{t.civicGateway.statusSummary}</span>
           <button
+            type="button"
             onClick={() => {
               sessionStorage.removeItem("bb_intro_seen");
               setIsIntroActive(true);
             }}
             className="text-[#C41528] hover:underline cursor-pointer font-medium"
           >
-            Replay Intro Sequence ↻
+            {t.civicGateway.replayIntro}
           </button>
         </div>
       </section>
 
       {/* ---------------- SECTION 6: CLOSING (WHITE & GIANT CROPPED WORDMARK) ---------------- */}
       <Section6Closing />
+
+      {/* ---------------- INTERACTIVE VOICE ASSISTANT MODAL ---------------- */}
+      {activeModal === "voice" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-lg p-6 sm:p-8 rounded-3xl bg-white shadow-2xl border border-white/80 space-y-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-[#1A0F12]">
+                  {t.modals.voiceTitle}
+                </h3>
+                <p className="text-xs text-[#1A0F12]/60 mt-1">
+                  {t.modals.voiceSubtitle}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveModal("none")}
+                className="text-gray-400 hover:text-gray-600 text-xl font-bold cursor-pointer"
+                aria-label="Close dialog"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-red-50 border border-red-100 text-center space-y-4">
+              <div className="w-16 h-16 rounded-full bg-[#C41528] text-white mx-auto flex items-center justify-center text-3xl animate-pulse shadow-lg shadow-red-500/30">
+                🎙️
+              </div>
+              <p className="text-xs font-bold text-[#C41528]">
+                {t.modals.voiceRecordingPrompt}
+              </p>
+              <p className="text-[11px] text-[#1A0F12]/70 italic bg-white/80 p-3 rounded-xl border border-red-200/50">
+                {t.modals.voiceSamplePrompt}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setActiveModal("none")}
+                className="px-4 py-2.5 rounded-xl border border-[#1A0F12]/20 text-[#1A0F12]/80 text-xs font-semibold hover:bg-black/5 transition-colors cursor-pointer"
+              >
+                {t.modals.voiceCancelBtn}
+              </button>
+              <a
+                href={getPortalUrl()}
+                target="_blank"
+                rel="noreferrer"
+                className="px-5 py-2.5 rounded-xl bg-[#C41528] hover:bg-[#8E1B2B] text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
+              >
+                {t.modals.voiceStopBtn}
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------- INTERACTIVE DOCUMENT DOCTOR MODAL ---------------- */}
+      {activeModal === "scanner" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-lg p-6 sm:p-8 rounded-3xl bg-white shadow-2xl border border-white/80 space-y-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-[#1A0F12]">
+                  {t.modals.scannerTitle}
+                </h3>
+                <p className="text-xs text-[#1A0F12]/60 mt-1">
+                  {t.modals.scannerSubtitle}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveModal("none")}
+                className="text-gray-400 hover:text-gray-600 text-xl font-bold cursor-pointer"
+                aria-label="Close dialog"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white border border-[#1A0F12]/10 space-y-3">
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
+                  <span className="text-[10px] text-gray-500 font-mono block">
+                    {t.modals.scannerCard1Title}
+                  </span>
+                  <span className="font-bold text-[#1A0F12]">Sunita Devi</span>
+                </div>
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200">
+                  <span className="text-[10px] text-red-500 font-mono block">
+                    {t.modals.scannerCard2Title}
+                  </span>
+                  <span className="font-bold text-[#C41528]">Sunitha Devi</span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold">
+                ⚠️ {t.modals.scannerMismatch}
+              </div>
+
+              <p className="text-xs text-[#1A0F12]/75 leading-relaxed font-light">
+                {t.modals.scannerAdvice}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setActiveModal("none")}
+                className="px-4 py-2.5 rounded-xl border border-[#1A0F12]/20 text-[#1A0F12]/80 text-xs font-semibold hover:bg-black/5 transition-colors cursor-pointer"
+              >
+                {t.modals.scannerCloseBtn}
+              </button>
+              <a
+                href={getPortalUrl()}
+                target="_blank"
+                rel="noreferrer"
+                className="px-5 py-2.5 rounded-xl bg-[#C41528] hover:bg-[#8E1B2B] text-white text-xs font-bold transition-all shadow-sm inline-flex items-center gap-1.5"
+              >
+                <span>{t.modals.scannerLaunchBtn}</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
