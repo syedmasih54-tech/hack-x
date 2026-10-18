@@ -21,6 +21,10 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
+from fastapi.openapi.utils import get_openapi
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+import secrets
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -104,6 +108,25 @@ async def lifespan(app: FastAPI):
     # Shutdown logic if any
 
 
+# Security Configuration for API Documentation
+DOCS_USERNAME = os.getenv("DOCS_USERNAME", "admin")
+DOCS_PASSWORD = os.getenv("DOCS_PASSWORD", "BenefitBridge@2026")
+security = HTTPBasic()
+
+
+def verify_docs_credentials(credentials: HTTPBasicCredentials = Depends(security)):
+    """Secures FastAPI documentation endpoints (/docs, /redoc, /openapi.json) with HTTP Basic Authentication."""
+    correct_username = secrets.compare_digest(credentials.username, DOCS_USERNAME)
+    correct_password = secrets.compare_digest(credentials.password, DOCS_PASSWORD)
+    if not (correct_username and correct_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password for API documentation.",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    return credentials.username
+
+
 app = FastAPI(
     title="BenefitBridge - Welfare Navigator Backend",
     description=(
@@ -113,6 +136,9 @@ app = FastAPI(
         "Does NOT replace official government portals or make final determinations."
     ),
     version="1.0.0",
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
     lifespan=lifespan
 )
 
@@ -187,9 +213,40 @@ def serve_frontend():
         return FileResponse(index_file)
     return {
         "service": "BenefitBridge Welfare Navigator Backend",
-        "docs": "/docs",
         "health": "/health"
     }
+
+
+# ---------------- Secured API Documentation Endpoints ----------------
+@app.get("/docs", include_in_schema=False)
+async def get_documentation(_username: str = Depends(verify_docs_credentials)):
+    """Secured Swagger UI endpoint protected by HTTP Basic Authentication."""
+    return get_swagger_ui_html(
+        openapi_url="/openapi.json",
+        title=f"{app.title} - Swagger UI (Secured)",
+        swagger_favicon_url="https://fastapi.tiangolo.com/img/favicon.png",
+    )
+
+
+@app.get("/redoc", include_in_schema=False)
+async def get_redoc_documentation(_username: str = Depends(verify_docs_credentials)):
+    """Secured ReDoc endpoint protected by HTTP Basic Authentication."""
+    return get_redoc_html(
+        openapi_url="/openapi.json",
+        title=f"{app.title} - ReDoc (Secured)",
+        redoc_favicon_url="https://fastapi.tiangolo.com/img/favicon.png",
+    )
+
+
+@app.get("/openapi.json", include_in_schema=False)
+async def get_open_api_endpoint(_username: str = Depends(verify_docs_credentials)):
+    """Secured OpenAPI Schema JSON endpoint protected by HTTP Basic Authentication."""
+    return get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
 
 
 # ---------------- 1. Health Check ----------------

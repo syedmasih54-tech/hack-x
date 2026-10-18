@@ -8,7 +8,7 @@ import Section3Focus from "./components/Section3Focus";
 import Section4JourneyTickets from "./components/Section4JourneyTickets";
 import Section5WhoDecides from "./components/Section5WhoDecides";
 import Section6Closing from "./components/Section6Closing";
-import { getPortalUrl, getDigiLockerUrl, getApiDocsUrl } from "./lib/urls";
+import { getPortalUrl, getDigiLockerUrl } from "./lib/urls";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -20,7 +20,6 @@ interface TranslationDictionary {
     taglineDesktop: string;
     taglineMobile: string;
     liveGatewayBadge: string;
-    apiDocsBtn: string;
     livePortalBtn: string;
   };
   civicGateway: {
@@ -67,7 +66,6 @@ const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       taglineDesktop: "Citizen welfare case platform",
       taglineMobile: "Welfare platform",
       liveGatewayBadge: "Live Gateway",
-      apiDocsBtn: "API Docs",
       livePortalBtn: "Live Portal",
     },
     civicGateway: {
@@ -117,7 +115,6 @@ const TRANSLATIONS: Record<Language, TranslationDictionary> = {
       taglineDesktop: "नागरिक कल्याण सेवा मंच",
       taglineMobile: "कल्याण मंच",
       liveGatewayBadge: "लाइव गेटवे",
-      apiDocsBtn: "एपीआई डॉक्स",
       livePortalBtn: "लाइव पोर्टल",
     },
     civicGateway: {
@@ -240,7 +237,20 @@ export default function App() {
   }, [isIntroActive]);
 
   return (
-    <div className="min-h-screen bg-white text-[#1A0F12] font-body selection:bg-[#C41528] selection:text-white relative">
+    <div className="min-h-screen bg-[#FFFDF9] text-[#1A0F12] font-body selection:bg-[#C41528] selection:text-white relative overflow-x-hidden">
+      {/* ---------------- AMBIENT GLASS UI BACKGROUND LIGHT BLOBS ---------------- */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute -top-40 -left-40 w-[550px] h-[550px] rounded-full bg-red-100/40 blur-[130px] animate-glass-pulse-glow" />
+        <div
+          className="absolute top-[35%] -right-40 w-[500px] h-[500px] rounded-full bg-amber-100/35 blur-[140px] animate-glass-pulse-glow"
+          style={{ animationDelay: "2s" }}
+        />
+        <div
+          className="absolute -bottom-40 left-1/3 w-[600px] h-[600px] rounded-full bg-rose-100/30 blur-[150px] animate-glass-pulse-glow"
+          style={{ animationDelay: "4s" }}
+        />
+      </div>
+
       {/* ---------------- SECTION 1: INTRO / PRELOADER HERO ---------------- */}
       {isIntroActive && (
         <Section1Intro
@@ -249,8 +259,8 @@ export default function App() {
         />
       )}
 
-      {/* ---------------- TOP FLOATING NAVIGATION ---------------- */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-[#1A0F12]/10 transition-all">
+      {/* ---------------- TOP FLOATING GLASS NAVIGATION ---------------- */}
+      <header className="sticky top-0 z-40 bg-white/75 backdrop-blur-xl border-b border-white/80 shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all">
         <div className="w-full max-w-7xl mx-auto px-6 sm:px-12 h-14 flex items-center justify-between text-[11px] font-sans text-[#1A0F12]/75">
           <div className="flex items-center gap-3">
             <span className="font-semibold text-[#8E1B2B]">{t.nav.brand}</span>
@@ -265,7 +275,7 @@ export default function App() {
 
           <div className="flex items-center gap-3 sm:gap-4">
             {/* Language Switcher */}
-            <div className="flex items-center border border-[#1A0F12]/15 rounded-full p-0.5 bg-white text-[11px] shadow-xs">
+            <div className="flex items-center border border-[#1A0F12]/15 rounded-full p-0.5 bg-white/90 text-[11px] shadow-xs">
               <button
                 type="button"
                 onClick={() => handleLanguageChange("en")}
@@ -292,22 +302,12 @@ export default function App() {
               </button>
             </div>
 
-            {/* API Docs Button */}
-            <a
-              href={getApiDocsUrl()}
-              target="_blank"
-              rel="noreferrer"
-              className="hidden lg:inline-flex items-center gap-1 text-[11px] font-medium text-[#1A0F12]/75 hover:text-[#C41528] transition-colors"
-            >
-              <span>{t.nav.apiDocsBtn}</span>
-            </a>
-
-            {/* Live Portal Button */}
+            {/* Live Portal Button (API Docs link hidden and secured per request) */}
             <a
               href={getPortalUrl()}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#8E1B2B]/10 hover:bg-[#C41528] hover:text-white text-[11px] font-medium text-[#8E1B2B] transition-all"
+              className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-full bg-[#8E1B2B]/10 hover:bg-[#C41528] hover:text-white text-[11px] font-medium text-[#8E1B2B] transition-all shadow-xs"
             >
               <span>{t.nav.livePortalBtn}</span>
               <span aria-hidden="true">↗</span>
@@ -316,7 +316,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* ---------------- SECTION 2: STATEMENT (WHITE) ---------------- */}
+      {/* ---------------- SECTION 2: STATEMENT (WITH FLOATING GLASS CARDS) ---------------- */}
       <Section2Statement underneathWordmarkRef={underneathWordmarkRef} />
 
       {/* ---------------- SECTION 3: FOCUS (SKY BLUE GRADIENT, PINNED) ---------------- */}
@@ -328,8 +328,8 @@ export default function App() {
       {/* ---------------- SECTION 5: WHO DECIDES (RED FULL-BLEED) ---------------- */}
       <Section5WhoDecides />
 
-      {/* ---------------- PRESERVED WORKING FEATURES & DASHBOARD MODULES ---------------- */}
-      <section className="w-full max-w-7xl mx-auto px-6 sm:px-12 py-20 border-t border-[#1A0F12]/10 space-y-12 bg-[#FCFBF9]">
+      {/* ---------------- CIVIC GATEWAY WITH FLOATING GLASS CARDS ---------------- */}
+      <section className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-12 py-20 border-t border-[#1A0F12]/10 space-y-12">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
             <span className="text-[10px] font-mono uppercase tracking-widest text-[#C41528] block mb-1">
@@ -344,17 +344,18 @@ export default function App() {
           </p>
         </div>
 
-        {/* 3 Core Interactive Cards (DigiLocker, Voice, Document Doctor) */}
+        {/* 3 Floating Glass Cards (DigiLocker, Voice, Document Doctor) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* 1. DigiLocker Direct Apply */}
-          <div className="border border-[#1A0F12]/15 rounded-2xl p-6 bg-white hover:border-[#C41528]/50 transition-colors flex flex-col justify-between group shadow-sm">
-            <div>
-              <div className="w-10 h-10 rounded-xl border border-[#1A0F12]/15 flex items-center justify-center text-[#C41528] mb-4 group-hover:border-[#C41528]/40 transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          {/* 1. DigiLocker Direct Apply - Floating Glass Card */}
+          <div className="border border-white/90 rounded-3xl p-7 bg-white/75 backdrop-blur-xl shadow-[0_16px_40px_rgba(196,21,40,0.06)] hover:shadow-[0_24px_55px_rgba(196,21,40,0.16)] hover:border-[#C41528]/50 hover:-translate-y-2 transition-all duration-300 flex flex-col justify-between group relative overflow-hidden animate-glass-float-1">
+            <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-red-100/50 blur-2xl pointer-events-none group-hover:scale-125 transition-transform" />
+            <div className="relative z-10">
+              <div className="w-12 h-12 rounded-2xl bg-white/90 border border-[#1A0F12]/10 flex items-center justify-center text-[#C41528] mb-5 group-hover:border-[#C41528]/40 transition-colors shadow-xs">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
                 </svg>
               </div>
-              <h4 className="text-lg font-bold text-[#1A0F12] mb-1.5">
+              <h4 className="text-lg font-bold text-[#1A0F12] mb-2 tracking-tight">
                 {t.civicGateway.card1Title}
               </h4>
               <p className="text-xs text-[#1A0F12]/70 leading-relaxed font-light">
@@ -365,22 +366,23 @@ export default function App() {
               href={getDigiLockerUrl()}
               target="_blank"
               rel="noreferrer"
-              className="mt-6 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#C41528] hover:bg-[#8E1B2B] text-white text-xs font-semibold transition-colors"
+              className="relative z-10 mt-6 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-[#C41528] hover:bg-[#8E1B2B] text-white text-xs font-semibold shadow-md shadow-red-600/20 active:scale-[0.98] transition-all cursor-pointer"
             >
               <span>{t.civicGateway.card1Btn}</span>
               <span aria-hidden="true">→</span>
             </a>
           </div>
 
-          {/* 2. Voice Assistance */}
-          <div className="border border-[#1A0F12]/15 rounded-2xl p-6 bg-white hover:border-[#C41528]/50 transition-colors flex flex-col justify-between group shadow-sm">
-            <div>
-              <div className="w-10 h-10 rounded-xl border border-[#1A0F12]/15 flex items-center justify-center text-[#8E1B2B] mb-4 group-hover:border-[#C41528]/40 transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {/* 2. Voice Assistance - Floating Glass Card */}
+          <div className="border border-white/90 rounded-3xl p-7 bg-white/75 backdrop-blur-xl shadow-[0_16px_40px_rgba(196,21,40,0.06)] hover:shadow-[0_24px_55px_rgba(196,21,40,0.16)] hover:border-[#C41528]/50 hover:-translate-y-2 transition-all duration-300 flex flex-col justify-between group relative overflow-hidden animate-glass-float-2">
+            <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-amber-100/50 blur-2xl pointer-events-none group-hover:scale-125 transition-transform" />
+            <div className="relative z-10">
+              <div className="w-12 h-12 rounded-2xl bg-white/90 border border-[#1A0F12]/10 flex items-center justify-center text-[#8E1B2B] mb-5 group-hover:border-[#C41528]/40 transition-colors shadow-xs">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                 </svg>
               </div>
-              <h4 className="text-lg font-bold text-[#1A0F12] mb-1.5">
+              <h4 className="text-lg font-bold text-[#1A0F12] mb-2 tracking-tight">
                 {t.civicGateway.card2Title}
               </h4>
               <p className="text-xs text-[#1A0F12]/70 leading-relaxed font-light">
@@ -390,22 +392,23 @@ export default function App() {
             <button
               type="button"
               onClick={() => setActiveModal("voice")}
-              className="mt-6 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[#1A0F12]/20 hover:border-[#C41528] text-[#8E1B2B] hover:text-[#C41528] text-xs font-semibold transition-colors cursor-pointer"
+              className="relative z-10 mt-6 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border border-[#1A0F12]/20 hover:border-[#C41528] bg-white/90 hover:bg-[#FEE2E2]/60 text-[#8E1B2B] hover:text-[#C41528] text-xs font-semibold shadow-xs active:scale-[0.98] transition-all cursor-pointer"
             >
               <span>{t.civicGateway.card2Btn}</span>
               <span aria-hidden="true">🎙</span>
             </button>
           </div>
 
-          {/* 3. Document Doctor */}
-          <div className="border border-[#1A0F12]/15 rounded-2xl p-6 bg-white hover:border-[#C41528]/50 transition-colors flex flex-col justify-between group shadow-sm">
-            <div>
-              <div className="w-10 h-10 rounded-xl border border-[#1A0F12]/15 flex items-center justify-center text-[#1A0F12] mb-4 group-hover:border-[#C41528]/40 transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {/* 3. Document Doctor - Floating Glass Card */}
+          <div className="border border-white/90 rounded-3xl p-7 bg-white/75 backdrop-blur-xl shadow-[0_16px_40px_rgba(196,21,40,0.06)] hover:shadow-[0_24px_55px_rgba(196,21,40,0.16)] hover:border-[#C41528]/50 hover:-translate-y-2 transition-all duration-300 flex flex-col justify-between group relative overflow-hidden animate-glass-float-3">
+            <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-rose-100/50 blur-2xl pointer-events-none group-hover:scale-125 transition-transform" />
+            <div className="relative z-10">
+              <div className="w-12 h-12 rounded-2xl bg-white/90 border border-[#1A0F12]/10 flex items-center justify-center text-[#1A0F12] mb-5 group-hover:border-[#C41528]/40 transition-colors shadow-xs">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h4 className="text-lg font-bold text-[#1A0F12] mb-1.5">
+              <h4 className="text-lg font-bold text-[#1A0F12] mb-2 tracking-tight">
                 {t.civicGateway.card3Title}
               </h4>
               <p className="text-xs text-[#1A0F12]/70 leading-relaxed font-light">
@@ -415,7 +418,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setActiveModal("scanner")}
-              className="mt-6 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[#1A0F12]/20 hover:border-[#C41528] text-[#1A0F12] hover:text-[#C41528] text-xs font-semibold transition-colors cursor-pointer"
+              className="relative z-10 mt-6 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border border-[#1A0F12]/20 hover:border-[#C41528] bg-white/90 hover:bg-[#FEE2E2]/60 text-[#1A0F12] hover:text-[#C41528] text-xs font-semibold shadow-xs active:scale-[0.98] transition-all cursor-pointer"
             >
               <span>{t.civicGateway.card3Btn}</span>
               <span aria-hidden="true">→</span>
@@ -423,10 +426,10 @@ export default function App() {
           </div>
         </div>
 
-        {/* Statutory SLA Guarantee Ribbon */}
-        <div className="p-4 rounded-xl border border-[#1A0F12]/15 bg-white flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#1A0F12]/80 shadow-xs">
+        {/* Statutory SLA Guarantee Glass Ribbon */}
+        <div className="p-5 rounded-2xl border border-white/90 bg-white/75 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.03)] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#1A0F12]/80 transition-all hover:shadow-md">
           <div className="flex items-center gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-[#C41528] animate-pulse" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[#16A34A] animate-pulse" />
             <span>
               {t.civicGateway.slaPrefix}{" "}
               <strong className="text-[#1A0F12] font-semibold">
@@ -460,8 +463,8 @@ export default function App() {
 
       {/* ---------------- INTERACTIVE VOICE ASSISTANT MODAL ---------------- */}
       {activeModal === "voice" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="w-full max-w-lg p-6 sm:p-8 rounded-3xl bg-white shadow-2xl border border-white/80 space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md">
+          <div className="w-full max-w-lg p-6 sm:p-8 rounded-3xl bg-white/90 backdrop-blur-2xl shadow-2xl border border-white/90 space-y-6">
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="text-xl font-bold text-[#1A0F12]">
@@ -481,14 +484,14 @@ export default function App() {
               </button>
             </div>
 
-            <div className="p-6 rounded-2xl bg-red-50 border border-red-100 text-center space-y-4">
+            <div className="p-6 rounded-2xl bg-red-50/70 border border-red-100 text-center space-y-4">
               <div className="w-16 h-16 rounded-full bg-[#C41528] text-white mx-auto flex items-center justify-center text-3xl animate-pulse shadow-lg shadow-red-500/30">
                 🎙️
               </div>
               <p className="text-xs font-bold text-[#C41528]">
                 {t.modals.voiceRecordingPrompt}
               </p>
-              <p className="text-[11px] text-[#1A0F12]/70 italic bg-white/80 p-3 rounded-xl border border-red-200/50">
+              <p className="text-[11px] text-[#1A0F12]/70 italic bg-white/90 p-3 rounded-xl border border-red-200/50">
                 {t.modals.voiceSamplePrompt}
               </p>
             </div>
@@ -516,8 +519,8 @@ export default function App() {
 
       {/* ---------------- INTERACTIVE DOCUMENT DOCTOR MODAL ---------------- */}
       {activeModal === "scanner" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="w-full max-w-lg p-6 sm:p-8 rounded-3xl bg-white shadow-2xl border border-white/80 space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md">
+          <div className="w-full max-w-lg p-6 sm:p-8 rounded-3xl bg-white/90 backdrop-blur-2xl shadow-2xl border border-white/90 space-y-6">
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="text-xl font-bold text-[#1A0F12]">
@@ -537,15 +540,15 @@ export default function App() {
               </button>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white border border-[#1A0F12]/10 space-y-3">
+            <div className="p-5 rounded-2xl bg-white/80 border border-[#1A0F12]/10 space-y-3 shadow-xs">
               <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
+                <div className="p-3 rounded-xl bg-gray-50/80 border border-gray-200">
                   <span className="text-[10px] text-gray-500 font-mono block">
                     {t.modals.scannerCard1Title}
                   </span>
                   <span className="font-bold text-[#1A0F12]">Sunita Devi</span>
                 </div>
-                <div className="p-3 rounded-xl bg-red-50 border border-red-200">
+                <div className="p-3 rounded-xl bg-red-50/80 border border-red-200">
                   <span className="text-[10px] text-red-500 font-mono block">
                     {t.modals.scannerCard2Title}
                   </span>
@@ -553,7 +556,7 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold">
+              <div className="p-3 rounded-xl bg-amber-50/80 border border-amber-200 text-amber-900 text-xs font-semibold">
                 ⚠️ {t.modals.scannerMismatch}
               </div>
 

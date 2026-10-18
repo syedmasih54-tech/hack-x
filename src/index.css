@@ -292,3 +292,75 @@ textarea.control { resize: vertical; }
   .app::before { display: none; }
   .card, .card > *, .interactive-icon, .button:active .interactive-icon, .document-icon:hover, .result-mark:hover, .check-dot:hover { transform: none !important; }
 }
+
+/* Glass UI & Floating Cards Animation Utilities */
+@keyframes glassFloat1 {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-9px) rotate(0.4deg);
+  }
+}
+
+@keyframes glassFloat2 {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-13px) rotate(-0.5deg);
+  }
+}
+
+@keyframes glassFloat3 {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(0.3deg);
+  }
+}
+
+@keyframes glassPulseGlow {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.08);
+  }
+}
+
+.animate-glass-float-1 {
+  animation: glassFloat1 6.5s ease-in-out infinite;
+}
+
+.animate-glass-float-2 {
+  animation: glassFloat2 7.8s ease-in-out 1.2s infinite;
+}
+
+.animate-glass-float-3 {
+  animation: glassFloat3 6s ease-in-out 2.4s infinite;
+}
+
+.animate-glass-pulse-glow {
+  animation: glassPulseGlow 9s ease-in-out infinite;
+}
+
+.glass-surface {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.88);
+}
+
+.glass-card-hover {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card-hover:hover {
+  transform: translateY(-7px) scale(1.01);
+  box-shadow: 0 24px 50px -12px rgba(196, 21, 40, 0.16), 0 0 0 1px rgba(196, 21, 40, 0.25);
+}
+

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -134,13 +135,20 @@ export const Section2Statement: React.FC<Section2StatementProps> = ({
   return (
     <section
       ref={sectionRef}
-      className="w-full bg-white text-[#1A0F12] relative overflow-hidden"
+      className="w-full bg-[#FFFDF9] text-[#1A0F12] relative overflow-hidden"
       aria-label="BenefitBridge Statement & Document Verification"
     >
+      {/* Ambient Glass UI Background Light Blobs */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute top-20 -left-32 w-80 h-80 rounded-full bg-red-100/40 blur-[120px]" />
+        <div className="absolute top-1/2 -right-32 w-96 h-96 rounded-full bg-amber-100/35 blur-[130px]" />
+        <div className="absolute bottom-10 left-1/4 w-80 h-80 rounded-full bg-rose-100/30 blur-[120px]" />
+      </div>
+
       {/* ---------------- 1. TOP WORDMARK IN RED (#C41528) ---------------- */}
       <div
         ref={underneathWordmarkRef}
-        className="relative w-full max-w-7xl mx-auto px-4 sm:px-8 pt-4 sm:pt-8 text-center"
+        className="relative w-full max-w-7xl mx-auto px-4 sm:px-8 pt-4 sm:pt-8 text-center z-10"
       >
         <Wordmark
           colorClass="text-[#C41528]"
@@ -165,7 +173,7 @@ export const Section2Statement: React.FC<Section2StatementProps> = ({
       </div>
 
       {/* ---------------- 2. CAPTIONS BELOW WORDMARK ---------------- */}
-      <div className="w-full max-w-7xl mx-auto px-6 sm:px-12 pt-4 pb-12 sm:pb-16 flex items-center justify-between border-b border-[#1A0F12]/15 text-[11px] sm:text-[12px] font-sans text-[#1A0F12]/75">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-12 pt-4 pb-12 sm:pb-16 flex items-center justify-between border-b border-[#1A0F12]/15 text-[11px] sm:text-[12px] font-sans text-[#1A0F12]/75">
         <span className="tracking-normal font-normal">
           Welfare, made reachable
         </span>
@@ -175,7 +183,7 @@ export const Section2Statement: React.FC<Section2StatementProps> = ({
       </div>
 
       {/* ---------------- 3. RIGHT-ALIGNED HEADLINE IN DEEP RED ---------------- */}
-      <div className="w-full max-w-7xl mx-auto px-6 sm:px-12 pt-16 sm:pt-24 pb-16">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-12 pt-16 sm:pt-24 pb-16">
         <div
           ref={headlineRef}
           className="text-right ml-auto max-w-4xl text-[#8E1B2B] text-[clamp(2.1rem,4.8vw,3.5rem)] font-light leading-[1.14] tracking-[-0.02em] select-none"
@@ -206,17 +214,18 @@ export const Section2Statement: React.FC<Section2StatementProps> = ({
         </div>
       </div>
 
-      {/* ---------------- 4. THREE PARALLAX DOCUMENT CARDS ---------------- */}
+      {/* ---------------- 4. THREE FLOATING PARALLAX GLASS DOCUMENT CARDS ---------------- */}
       <div
         ref={cardsContainerRef}
-        className="w-full max-w-7xl mx-auto px-6 sm:px-12 pt-8 pb-28 sm:pb-36"
+        className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-12 pt-8 pb-28 sm:pb-36"
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-start">
-          {/* CARD 1: Ration Card (NFSA) */}
+          {/* CARD 1: Ration Card (NFSA) - Floating Glass Card */}
           <div
             ref={card1Ref}
-            className="w-full bg-white rounded-2xl border border-[#1A0F12]/15 p-6 sm:p-7 shadow-[0_12px_32px_rgba(26,15,18,0.06)] hover:border-[#C41528]/40 transition-all flex flex-col justify-between min-h-[380px] will-change-transform"
+            className="w-full bg-white/75 backdrop-blur-xl rounded-3xl border border-white/90 p-6 sm:p-7 shadow-[0_16px_40px_rgba(26,15,18,0.06)] hover:shadow-[0_24px_55px_rgba(196,21,40,0.16)] hover:border-[#C41528]/50 transition-all flex flex-col justify-between min-h-[390px] will-change-transform relative overflow-hidden group animate-glass-float-1"
           >
+            <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-red-100/50 blur-2xl pointer-events-none group-hover:scale-125 transition-transform" />
             <div>
               {/* Card Header & Issuer Stamp */}
               <div className="flex items-center justify-between pb-4 border-b border-[#1A0F12]/10 mb-5">
@@ -228,7 +237,7 @@ export const Section2Statement: React.FC<Section2StatementProps> = ({
                     Ration Card (NFSA)
                   </h4>
                 </div>
-                <div className="w-8 h-8 rounded-full border border-[#1A0F12]/15 flex items-center justify-center text-[10px] font-mono text-[#8E1B2B]">
+                <div className="w-8 h-8 rounded-full bg-white/90 border border-[#1A0F12]/15 flex items-center justify-center text-[10px] font-mono text-[#8E1B2B] shadow-xs">
                   PHH
                 </div>
               </div>
@@ -284,11 +293,12 @@ export const Section2Statement: React.FC<Section2StatementProps> = ({
             </div>
           </div>
 
-          {/* CARD 2: Bank Passbook with Spelling Variance Flag */}
+          {/* CARD 2: Bank Passbook with Spelling Variance Flag - Floating Glass Card */}
           <div
             ref={card2Ref}
-            className="w-full bg-white rounded-2xl border border-[#1A0F12]/15 p-6 sm:p-7 shadow-[0_12px_32px_rgba(26,15,18,0.06)] hover:border-[#C41528]/40 transition-all flex flex-col justify-between min-h-[380px] will-change-transform"
+            className="w-full bg-white/75 backdrop-blur-xl rounded-3xl border border-white/90 p-6 sm:p-7 shadow-[0_16px_40px_rgba(26,15,18,0.06)] hover:shadow-[0_24px_55px_rgba(196,21,40,0.16)] hover:border-[#C41528]/50 transition-all flex flex-col justify-between min-h-[390px] will-change-transform relative overflow-hidden group animate-glass-float-2"
           >
+            <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-amber-100/50 blur-2xl pointer-events-none group-hover:scale-125 transition-transform" />
             <div>
               {/* Bank Header */}
               <div className="flex items-center justify-between pb-4 border-b border-[#1A0F12]/10 mb-5">
@@ -300,7 +310,7 @@ export const Section2Statement: React.FC<Section2StatementProps> = ({
                     Primary Savings Passbook
                   </h4>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-[#8E1B2B]/5 border border-[#8E1B2B]/20 flex items-center justify-center text-[#8E1B2B]">
+                <div className="w-8 h-8 rounded-full bg-white/90 border border-[#8E1B2B]/20 flex items-center justify-center text-[#8E1B2B] shadow-xs">
                   <svg
                     className="w-4 h-4"
                     fill="none"
@@ -329,7 +339,7 @@ export const Section2Statement: React.FC<Section2StatementProps> = ({
                 </div>
 
                 {/* Soft Document Doctor Callout */}
-                <div className="p-2.5 rounded-xl bg-[#FFF6F3] border border-[#C41528]/25 text-[11px] text-[#8E1B2B] space-y-0.5">
+                <div className="p-2.5 rounded-xl bg-white/80 border border-[#C41528]/25 text-[11px] text-[#8E1B2B] space-y-0.5 shadow-xs">
                   <div className="font-semibold flex items-center gap-1">
                     <span>⚠ Phonetic Spelling Variation</span>
                   </div>
@@ -369,11 +379,12 @@ export const Section2Statement: React.FC<Section2StatementProps> = ({
             </div>
           </div>
 
-          {/* CARD 3: Citizen Readiness 60% */}
+          {/* CARD 3: Citizen Readiness 60% - Floating Glass Card */}
           <div
             ref={card3Ref}
-            className="w-full bg-white rounded-2xl border border-[#1A0F12]/15 p-6 sm:p-7 shadow-[0_12px_32px_rgba(26,15,18,0.06)] hover:border-[#C41528]/40 transition-all flex flex-col justify-between min-h-[380px] will-change-transform"
+            className="w-full bg-white/75 backdrop-blur-xl rounded-3xl border border-white/90 p-6 sm:p-7 shadow-[0_16px_40px_rgba(26,15,18,0.06)] hover:shadow-[0_24px_55px_rgba(196,21,40,0.16)] hover:border-[#C41528]/50 transition-all flex flex-col justify-between min-h-[390px] will-change-transform relative overflow-hidden group animate-glass-float-3"
           >
+            <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-rose-100/50 blur-2xl pointer-events-none group-hover:scale-125 transition-transform" />
             <div>
               {/* Readiness Header */}
               <div className="flex items-center justify-between pb-4 border-b border-[#1A0F12]/10 mb-5">
